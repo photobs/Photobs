@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="bn">
 <head>
+  <meta charset="UTF-8">
   <link rel="manifest" href="manifest.json">
-   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Photobs - Photo Sharing Platform</title>
   <style>
@@ -19,7 +19,6 @@
       transition: background 0.3s, color 0.3s;
     }
 
-    /* Dark Mode Styling */
     body.dark-mode {
       background-color: #121212;
       color: #fff;
@@ -99,7 +98,6 @@
       color: #ff3e6c;
     }
 
-    /* Search Bar */
     .search-container {
       flex: 1;
       max-width: 400px;
@@ -125,7 +123,7 @@
     .nav-controls {
       display: flex;
       align-items: center;
-      gap: 15px;
+      gap: 12px;
     }
 
     .btn-icon {
@@ -157,7 +155,7 @@
       color: inherit;
     }
 
-    /* --- Gallery Section --- */
+    /* --- Gallery Grid --- */
     .container {
       max-width: 1200px;
       margin: 30px auto;
@@ -177,6 +175,11 @@
       box-shadow: 0 4px 15px rgba(0,0,0,0.1);
       display: flex;
       flex-direction: column;
+      transition: transform 0.2s;
+    }
+
+    .photo-card:hover {
+      transform: translateY(-4px);
     }
 
     body.dark-mode .photo-card {
@@ -188,6 +191,7 @@
       height: 230px;
       object-fit: cover;
       display: block;
+      cursor: pointer;
     }
 
     .photo-info {
@@ -213,30 +217,54 @@
       color: #aaa;
     }
 
+    .photo-author {
+      font-size: 0.8rem;
+      color: #ff3e6c;
+      font-weight: 500;
+      margin-top: 4px;
+    }
+
     .card-footer {
       display: flex;
-      justify-content: flex-end;
-      margin-top: 5px;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid #eee;
+    }
+
+    body.dark-mode .card-footer {
+      border-top-color: #333;
     }
 
     .download-btn {
       background: #007bff;
       color: white;
       text-decoration: none;
-      padding: 7px 14px;
+      padding: 6px 12px;
       border-radius: 6px;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
     }
 
-    /* Upload Modal Style */
-    #upload-modal {
+    .delete-btn {
+      background: #dc3545;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      cursor: pointer;
+    }
+
+    /* Modals (Upload & Full Image) */
+    .modal {
       display: none;
       position: fixed;
       top: 0;
       left: 0;
       width: 100%;
       height: 100%;
-      background: rgba(0,0,0,0.6);
+      background: rgba(0,0,0,0.7);
       z-index: 1000;
       justify-content: center;
       align-items: center;
@@ -260,7 +288,7 @@
 
     .modal-content input, .modal-content textarea {
       width: 100%;
-      padding: 8px 12px;
+      padding: 9px 12px;
       border-radius: 6px;
       border: 1px solid #ccc;
       outline: none;
@@ -297,6 +325,14 @@
       cursor: pointer;
     }
 
+    /* Full View Modal */
+    #fullview-modal img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 8px;
+      box-shadow: 0 5px 25px rgba(0,0,0,0.5);
+    }
+
     #loading-msg {
       text-align: center;
       font-size: 1.1rem;
@@ -308,7 +344,7 @@
 </head>
 <body>
 
-  <!-- Splash Screen with Fireworks Animation -->
+  <!-- Splash Screen -->
   <div id="splash-screen">
     <canvas id="fireworks"></canvas>
     <div class="splash-content">
@@ -317,31 +353,29 @@
     </div>
   </div>
 
-  <!-- Main Navbar -->
+  <!-- Header -->
   <header>
     <div class="logo">Photobs</div>
 
-    <!-- Search Box -->
     <div class="search-container">
-      <input type="text" id="search-input" class="search-input" placeholder="🔍 Search photos by title or description...">
+      <input type="text" id="search-input" class="search-input" placeholder="🔍 Search photos or uploader...">
     </div>
 
     <div class="nav-controls">
-      <div class="nav-controls">
-  <!-- PWA Install Button -->
-  <button id="install-btn" class="toggle-btn" style="display: none; background: #28a745; color: white; border: none; font-weight: bold;">
-    📲 Install App
-  </button>
-  
-  <!-- Upload Button (+) -->
-  <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
+      <!-- PWA Install Button -->
+      <button id="install-btn" class="toggle-btn" style="display: none; background: #28a745; color: white; border: none; font-weight: bold;">
+        📲 Install App
+      </button>
 
-  <!-- Dark Mode Toggle -->
-  <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
-      </div>
+      <!-- Upload Button (+) -->
+      <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
+
+      <!-- Dark Mode Toggle -->
+      <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
+    </div>
   </header>
 
-  <!-- Main Gallery Grid -->
+  <!-- Gallery -->
   <div class="container">
     <div class="gallery-grid" id="gallery">
       <div id="loading-msg">Loading photos...</div>
@@ -349,10 +383,12 @@
   </div>
 
   <!-- Upload Modal -->
-  <div id="upload-modal">
+  <div id="upload-modal" class="modal">
     <div class="modal-content">
       <h3>Upload New Photo</h3>
       <input type="file" id="photo-file" accept="image/*">
+      <input type="text" id="uploader-name" placeholder="Your Name...">
+      <input type="email" id="uploader-email" placeholder="Your Email...">
       <input type="text" id="photo-title-input" placeholder="Photo Title...">
       <textarea id="photo-desc-input" rows="3" placeholder="Photo Description..."></textarea>
       <div class="modal-buttons">
@@ -362,10 +398,15 @@
     </div>
   </div>
 
-  <!-- Background Audio -->
+  <!-- Full Image View Modal -->
+  <div id="fullview-modal" class="modal" onclick="this.style.display='none'">
+    <img id="full-image-src" src="" alt="Full View">
+  </div>
+
+  <!-- Background Music -->
   <audio id="bg-music" src="channa.mp3"></audio>
 
-  <!-- Gallery & Compressed Storage Script -->
+  <!-- Gallery Script -->
   <script>
     const gallery = document.getElementById('gallery');
     
@@ -378,16 +419,18 @@
         return;
       }
 
-      photos.forEach((photo) => {
+      photos.forEach((photo, index) => {
         const card = document.createElement('div');
         card.className = 'photo-card';
         card.innerHTML = `
-          <img src="${photo.imageUrl}" alt="${photo.title}">
+          <img src="${photo.imageUrl}" alt="${photo.title}" onclick="openFullImage('${photo.imageUrl}')">
           <div class="photo-info">
             <div class="photo-title">${photo.title}</div>
             <div class="photo-desc">${photo.desc}</div>
+            <div class="photo-author">👤 ${photo.uploaderName || 'Anonymous'} (${photo.uploaderEmail || 'No Email'})</div>
             <div class="card-footer">
-              <a href="${photo.imageUrl}" download="${photo.title}.jpg" target="_blank" class="download-btn">Download</a>
+              <a href="${photo.imageUrl}" download="${photo.title}.jpg" class="download-btn">Download</a>
+              <button class="delete-btn" onclick="deletePhoto(${index})">🗑️ Delete</button>
             </div>
           </div>
         `;
@@ -395,9 +438,25 @@
       });
     }
 
+    function openFullImage(url) {
+      document.getElementById('full-image-src').src = url;
+      document.getElementById('fullview-modal').style.display = 'flex';
+    }
+
+    function deletePhoto(index) {
+      if (confirm("আপনি কি নিশ্চিত যে ছবিটি ডিলিট করতে চান?")) {
+        let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+        photos.splice(index, 1);
+        localStorage.setItem('photobs_photos', JSON.stringify(photos));
+        loadPhotos();
+      }
+    }
+
     const submitPhotoBtn = document.getElementById('submit-photo-btn');
     submitPhotoBtn.addEventListener('click', () => {
       const fileInput = document.getElementById('photo-file');
+      const nameInput = document.getElementById('uploader-name').value || "Anonymous";
+      const emailInput = document.getElementById('uploader-email').value || "N/A";
       const titleInput = document.getElementById('photo-title-input').value || "Untitled Photo";
       const descInput = document.getElementById('photo-desc-input').value || "No description provided.";
 
@@ -438,6 +497,8 @@
             try {
               let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
               photos.unshift({
+                uploaderName: nameInput,
+                uploaderEmail: emailInput,
                 title: titleInput,
                 desc: descInput,
                 imageUrl: compressedBase64,
@@ -447,12 +508,14 @@
               localStorage.setItem('photobs_photos', JSON.stringify(photos));
 
               fileInput.value = "";
+              document.getElementById('uploader-name').value = "";
+              document.getElementById('uploader-email').value = "";
               document.getElementById('photo-title-input').value = "";
               document.getElementById('photo-desc-input').value = "";
               document.getElementById('upload-modal').style.display = "none";
               loadPhotos();
             } catch (err) {
-              alert("স্টোরেজ ভর্তি হয়ে গেছে! দয়া করে অন্য ছবি ট্রাই করুন।");
+              alert("স্টোরেজ ভর্তি হয়ে গেছে!");
             } finally {
               submitPhotoBtn.innerText = "Add Photo";
               submitPhotoBtn.disabled = false;
@@ -461,16 +524,16 @@
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
-        alert("দয়া করে প্রথমে একটি ছবি সিলেক্ট করুন!");
+        alert("দয়া করে একটি ছবি সিলেক্ট করুন!");
       }
     });
 
     loadPhotos();
   </script>
 
-  <!-- Non-Module UI Logic (Animations, Search, Theme & Audio) -->
+  <!-- UI & PWA Script -->
   <script>
-    // --- 1. Typewriter Animation ---
+    // Typewriter
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
     const typewriterEl = document.getElementById('typewriter-text');
@@ -492,7 +555,7 @@
       }
     }
 
-    // --- 2. Fireworks Animation ---
+    // Fireworks
     const canvas = document.getElementById('fireworks');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -503,10 +566,7 @@
         this.x = x;
         this.y = y;
         this.color = color;
-        this.velocity = {
-          x: (Math.random() - 0.5) * 6,
-          y: (Math.random() - 0.5) * 6
-        };
+        this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
         this.alpha = 1;
         this.friction = 0.98;
       }
@@ -535,9 +595,7 @@
       const x = Math.random() * canvas.width;
       const y = Math.random() * (canvas.height * 0.6);
       const color = colors[Math.floor(Math.random() * colors.length)];
-      for (let i = 0; i < 30; i++) {
-        particles.push(new Particle(x, y, color));
-      }
+      for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
     }
 
     setInterval(createFirework, 400);
@@ -545,14 +603,9 @@
     function animateFireworks() {
       ctx.fillStyle = 'rgba(8, 8, 16, 0.2)';
       ctx.fillRect(0, 0, canvas.width, canvas.height);
-      
-      particles.forEach((particle, index) => {
-        if (particle.alpha > 0) {
-          particle.update();
-          particle.draw();
-        } else {
-          particles.splice(index, 1);
-        }
+      particles.forEach((p, idx) => {
+        if (p.alpha > 0) { p.update(); p.draw(); }
+        else { particles.splice(idx, 1); }
       });
       requestAnimationFrame(animateFireworks);
     }
@@ -562,17 +615,16 @@
       animateFireworks();
     });
 
-    // --- 3. Dark Mode Toggle ---
+    // Dark Mode
     const themeBtn = document.getElementById('theme-btn');
     themeBtn.addEventListener('click', () => {
       document.body.classList.toggle('dark-mode');
       themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
     });
 
-    // --- 4. Audio Control on Minimize/Tab Switch ---
+    // Audio
     const audio = document.getElementById('bg-music');
     let userHasInteracted = false;
-
     window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
     window.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
 
@@ -580,7 +632,7 @@
       if (document.visibilityState === 'hidden') {
         if (userHasInteracted) {
           audio.currentTime = 0;
-          audio.play().catch(err => console.log("Audio play error: ", err));
+          audio.play().catch(err => console.log(err));
         }
       } else {
         audio.pause();
@@ -588,41 +640,33 @@
       }
     });
 
-    // --- 5. Real-time Search ---
+    // Search
     const searchInput = document.getElementById('search-input');
     searchInput.addEventListener('input', (e) => {
       const query = e.target.value.toLowerCase();
       const cards = document.querySelectorAll('.photo-card');
-
       cards.forEach(card => {
-        const title = card.querySelector('.photo-title').innerText.toLowerCase();
-        const desc = card.querySelector('.photo-desc').innerText.toLowerCase();
-
-        if (title.includes(query) || desc.includes(query)) {
-          card.style.display = "flex";
-        } else {
-          card.style.display = "none";
-        }
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(query) ? "flex" : "none";
       });
     });
 
-    // --- Modal Control ---
+    // Modal Control
     document.getElementById('open-upload-btn').addEventListener('click', () => {
       document.getElementById('upload-modal').style.display = "flex";
     });
     document.getElementById('close-upload-btn').addEventListener('click', () => {
       document.getElementById('upload-modal').style.display = "none";
     });
-        // --- PWA Install Prompt Logic ---
+
+    // PWA Install Logic
     let deferredPrompt;
     const installBtn = document.getElementById('install-btn');
 
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
-      if (installBtn) {
-        installBtn.style.display = 'inline-block';
-      }
+      if (installBtn) installBtn.style.display = 'inline-block';
     });
 
     if (installBtn) {
@@ -630,9 +674,7 @@
         if (deferredPrompt) {
           deferredPrompt.prompt();
           const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') {
-            console.log('User accepted the install prompt');
-          }
+          if (outcome === 'accepted') console.log('User accepted prompt');
           deferredPrompt = null;
           installBtn.style.display = 'none';
         }
@@ -640,17 +682,8 @@
     }
 
     window.addEventListener('appinstalled', () => {
-      if (installBtn) {
-        installBtn.style.display = 'none';
-      }
-      console.log('PWA was installed');
+      if (installBtn) installBtn.style.display = 'none';
     });
   </script>
-</body>
-</html>
-
-  </script>
-      
-  
 </body>
 </html>
