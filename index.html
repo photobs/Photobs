@@ -3,9 +3,8 @@
 <head>
   <meta charset="UTF-8">
   <link rel="manifest" href="manifest.json">
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='512' height='512' viewBox='0 0 512 512'><rect width='512' height='512' rx='120' fill='url(%23grad)'/><defs><linearGradient id='grad' x1='0%' y1='0%' x2='100%' y2='100%'><stop offset='0%' stop-color='%23ff0055'/><stop offset='100%' stop-color='%230055ff'/></linearGradient></defs><text x='50%' y='48%' font-family='sans-serif' font-weight='900' font-size='260' fill='%23ffffff' text-anchor='middle' dominant-baseline='central'>P</text><text x='50%' y='80%' font-family='sans-serif' font-weight='700' font-size='90' fill='%2300ffff' text-anchor='middle' dominant-baseline='central'>bs</text></svg>">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Photobs - Advanced Photo Sharing Platform</title>
+  <title>Photobs - Photo Sharing Platform</title>
   <style>
     * {
       box-sizing: border-box;
@@ -61,37 +60,26 @@
     }
 
     .splash-logo-box {
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(135deg, #ff0055, #0055ff);
-      border-radius: 25px;
+      width: 90px;
+      height: 90px;
+      background: linear-gradient(135deg, #00dfd8, #7928ca, #ff0080);
+      border-radius: 22px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 0 35px rgba(255, 0, 85, 0.6);
+      box-shadow: 0 0 30px rgba(255, 0, 128, 0.6);
       animation: pulseGlow 2s infinite alternate;
-      border: 2px solid rgba(255, 255, 255, 0.2);
     }
 
     @keyframes pulseGlow {
-      0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 85, 0.6); }
-      100% { transform: scale(1.08); box-shadow: 0 0 40px rgba(0, 85, 255, 0.9); }
+      0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 128, 0.5); }
+      100% { transform: scale(1.08); box-shadow: 0 0 40px rgba(0, 223, 216, 0.8); }
     }
 
-    .splash-logo-box .big-p {
-      font-size: 2.8rem;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 0.9;
-    }
-
-    .splash-logo-box .small-bs {
-      font-size: 1rem;
-      font-weight: 700;
-      color: #00ffff;
-      letter-spacing: 2px;
-      text-transform: lowercase;
+    .splash-logo-box svg {
+      width: 55px;
+      height: 55px;
+      fill: #ffffff;
     }
 
     .splash-title {
@@ -133,43 +121,33 @@
     .brand-container {
       display: flex;
       align-items: center;
-      gap: 12px;
+      gap: 10px;
+      text-decoration: none;
       cursor: pointer;
     }
 
-    .brand-icon-box {
-      width: 48px;
-      height: 48px;
-      background: linear-gradient(135deg, #ff0055, #0055ff);
-      border-radius: 14px;
+    .brand-icon {
+      width: 42px;
+      height: 42px;
+      background: linear-gradient(135deg, #00dfd8, #7928ca, #ff0080);
+      border-radius: 12px;
       display: flex;
-      flex-direction: column;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 4px 15px rgba(255, 0, 85, 0.4);
-      border: 1.5px solid rgba(255, 255, 255, 0.3);
+      box-shadow: 0 0 12px rgba(121, 40, 202, 0.5);
     }
 
-    .brand-icon-box .big-p {
-      font-size: 1.5rem;
-      font-weight: 900;
-      color: #ffffff;
-      line-height: 0.95;
-    }
-
-    .brand-icon-box .small-bs {
-      font-size: 0.65rem;
-      font-weight: 700;
-      color: #00ffff;
-      letter-spacing: 1px;
-      text-transform: lowercase;
+    .brand-icon svg {
+      width: 26px;
+      height: 26px;
+      fill: white;
     }
 
     .logo-text {
       font-size: 1.7rem;
       font-weight: 800;
       letter-spacing: 1px;
-      background: linear-gradient(135deg, #ff0055, #0055ff);
+      background: linear-gradient(135deg, #ff0080, #7928ca, #00dfd8);
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
     }
@@ -203,7 +181,7 @@
     }
 
     .btn-icon {
-      background: linear-gradient(135deg, #ff0055, #0055ff);
+      background: linear-gradient(135deg, #ff0080, #7928ca);
       color: white;
       border: none;
       width: 40px;
@@ -214,7 +192,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 3px 10px rgba(255, 0, 85, 0.3);
+      box-shadow: 0 3px 10px rgba(255, 0, 128, 0.3);
       transition: transform 0.2s;
     }
 
@@ -262,7 +240,7 @@
     }
 
     .filter-chip.active, .filter-chip:hover {
-      background: linear-gradient(135deg, #ff0055, #0055ff);
+      background: linear-gradient(135deg, #ff0080, #7928ca);
       color: white;
     }
 
@@ -331,14 +309,14 @@
 
     .photo-author {
       font-size: 0.8rem;
-      color: #ff0055;
+      color: #ff0080;
       font-weight: 500;
     }
 
     .category-tag {
       display: inline-block;
-      background: rgba(0, 85, 255, 0.1);
-      color: #0055ff;
+      background: rgba(121, 40, 202, 0.1);
+      color: #7928ca;
       padding: 2px 8px;
       border-radius: 6px;
       font-size: 0.72rem;
@@ -346,7 +324,7 @@
       width: fit-content;
     }
 
-    /* Card Action Bar (Like, Share, Download, Delete) */
+    /* Card Actions */
     .card-actions {
       display: flex;
       justify-content: space-between;
@@ -379,11 +357,11 @@
     }
 
     .like-btn.liked {
-      color: #ff0055;
+      color: #ff0080;
     }
 
     .download-btn {
-      background: #0055ff;
+      background: #007bff;
       color: white;
       text-decoration: none;
       padding: 5px 10px;
@@ -401,7 +379,7 @@
       cursor: pointer;
     }
 
-    /* Comments Section inside Card */
+    /* Comments Section */
     .comments-section {
       margin-top: 8px;
       padding-top: 8px;
@@ -555,8 +533,9 @@
     <canvas id="fireworks"></canvas>
     <div class="splash-content">
       <div class="splash-logo-box">
-        <span class="big-p">P</span>
-        <span class="small-bs">bs</span>
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
       </div>
       <h1 class="splash-title" id="typewriter-text"></h1>
       <p class="splash-subtitle" id="author-text">Created by Souptik Panda</p>
@@ -566,9 +545,10 @@
   <!-- Header -->
   <header>
     <div class="brand-container" onclick="filterCategory('All')">
-      <div class="brand-icon-box">
-        <span class="big-p">P</span>
-        <span class="small-bs">bs</span>
+      <div class="brand-icon">
+        <svg viewBox="0 0 24 24">
+          <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+        </svg>
       </div>
       <div class="logo-text">Photobs</div>
     </div>
@@ -584,7 +564,7 @@
       </button>
 
       <!-- PC Version Button -->
-      <button id="pc-install-btn" class="toggle-btn" onclick="alert('Open this website in Google Chrome or Microsoft Edge on your PC, then click the Install button in the browser address bar to use it as a Desktop App!')" style="background: #0055ff; color: white; border: none; font-weight: bold;">
+      <button id="pc-install-btn" class="toggle-btn" onclick="alert('Open this website in Google Chrome or Microsoft Edge on your PC, then click the Install button in the browser address bar to use it as a Desktop App!')" style="background: #007bff; color: white; border: none; font-weight: bold;">
         💻 PC Version
       </button>
 
@@ -664,14 +644,12 @@
       }
 
       filteredPhotos.forEach((photo) => {
-        // Find true index in original array
         const realIndex = photos.findIndex(p => p.timestamp === photo.timestamp);
         
         const card = document.createElement('div');
         card.className = 'photo-card';
         card.setAttribute('data-category', photo.category || 'Others');
         
-        // Render comments
         let commentsHtml = '';
         if (photo.comments && photo.comments.length > 0) {
           photo.comments.forEach(c => {
@@ -748,4 +726,38 @@
     }
 
     function sharePhoto(title, url) {
-      if
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: 'Check out this amazing photo on Photobs!',
+          url: window.location.href
+        }).catch(err => console.log(err));
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Website link copied to clipboard!");
+      }
+    }
+
+    function addComment(index) {
+      const input = document.getElementById(`comment-text-${index}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+      if (!photos[index].comments) photos[index].comments = [];
+      
+      let commenterName = prompt("Enter your name for the comment:", "Visitor") || "Anonymous";
+      photos[index].comments.push({ name: commenterName, text: text });
+      
+      localStorage.setItem('photobs_photos', JSON.stringify(photos));
+      loadPhotos();
+    }
+
+    function openFullImage(url) {
+      document.getElementById('full-image-src').src = url;
+      document.getElementById('fullview-modal').style.display = 'flex';
+    }
+
+    function deletePhoto(index) {
+      if (confirm("Are you sure you want to delete this photo?")) {
+        let photos = JSON.parse(localStorage.getItem('photobs_p
