@@ -1,0 +1,20 @@
+{
+  "name": "Photobs",
+  "short_name": "Photobs",
+  "start_url": "/Photobs/",
+  "display": "standalone",
+  "background_color": "#080810",
+  "theme_color": "#ff3e6c",
+  "icons": [
+    {
+      "src": "https://via.placeholder.com/192",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "https://via.placeholder.com/512",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
