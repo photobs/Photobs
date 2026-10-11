@@ -337,7 +337,7 @@
   <!-- Main Gallery Grid -->
   <div class="container">
     <div class="gallery-grid" id="gallery">
-      <div id="loading-msg">Connecting to Photobs Database...</div>
+      <div id="loading-msg">Loading photos...</div>
     </div>
   </div>
 
@@ -355,65 +355,39 @@
     </div>
   </div>
 
-  <!-- Background Audio (Channa Mereya Song) -->
-  <audio id="bg-music" loop src="channa.mp3"></audio>
+  <!-- Background Audio (Without Loop, plays only on hide/minimize) -->
+  <audio id="bg-music" src="channa.mp3"></audio>
 
-  <!-- Firebase SDK Modules -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, onSnapshot, query, orderBy } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-    // 🔴 Firebase Configuration
-    const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "photobs-app.firebaseapp.com",
-      projectId: "photobs-app",
-      storageBucket: "photobs-app.appspot.com",
-      messagingSenderId: "1234567890",
-      appId: "1:1234567890:web:abcdef123456"
-    };
-
-    // Firebase Initialize
-    const app = initializeApp(firebaseConfig);
-    const db = getFirestore(app);
-    const photosCollection = collection(db, "photos");
-
+  <!-- Gallery & Local Storage Script -->
+  <script>
     const gallery = document.getElementById('gallery');
-    const loadingMsg = document.getElementById('loading-msg');
-
-    // --- Real-time Live Synchronization with Firebase ---
-    const q = query(photosCollection, orderBy("timestamp", "desc"));
     
-    onSnapshot(q, (snapshot) => {
-      gallery.innerHTML = ""; 
-      
-      if (snapshot.empty) {
-        gallery.innerHTML = "<div id='loading-msg'>No photos uploaded yet. Be the first to upload!</div>";
+    function loadPhotos() {
+      const photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+      gallery.innerHTML = "";
+
+      if (photos.length === 0) {
+        gallery.innerHTML = "<div id='loading-msg'>No photos uploaded yet. Click '+' to upload!</div>";
         return;
       }
 
-      snapshot.forEach((doc) => {
-        const data = doc.data();
+      photos.forEach((photo) => {
         const card = document.createElement('div');
         card.className = 'photo-card';
         card.innerHTML = `
-          <img src="${data.imageUrl}" alt="${data.title}">
+          <img src="${photo.imageUrl}" alt="${photo.title}">
           <div class="photo-info">
-            <div class="photo-title">${data.title}</div>
-            <div class="photo-desc">${data.desc}</div>
+            <div class="photo-title">${photo.title}</div>
+            <div class="photo-desc">${photo.desc}</div>
             <div class="card-footer">
-              <a href="${data.imageUrl}" download="${data.title}.jpg" target="_blank" class="download-btn">Download</a>
+              <a href="${photo.imageUrl}" download="${photo.title}.jpg" target="_blank" class="download-btn">Download</a>
             </div>
           </div>
         `;
         gallery.appendChild(card);
       });
-    }, (error) => {
-      console.log("Firebase not connected yet or using fallback demo mode.");
-      loadingMsg.innerText = "Showing sample gallery (Connect your Firebase API key for live database).";
-    });
+    }
 
-    // --- Upload Photo to Firebase ---
     const submitPhotoBtn = document.getElementById('submit-photo-btn');
     submitPhotoBtn.addEventListener('click', () => {
       const fileInput = document.getElementById('photo-file');
@@ -425,36 +399,39 @@
         submitPhotoBtn.disabled = true;
 
         const reader = new FileReader();
-        reader.onload = async function(e) {
+        reader.onload = function(e) {
           const imageBase64 = e.target.result;
+          
+          let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+          photos.unshift({
+            title: titleInput,
+            desc: descInput,
+            imageUrl: imageBase64,
+            timestamp: new Date().getTime()
+          });
 
-          try {
-            await addDoc(photosCollection, {
-              title: titleInput,
-              desc: descInput,
-              imageUrl: imageBase64,
-              timestamp: new Date()
-            });
+          localStorage.setItem('photobs_photos', JSON.stringify(photos));
 
-            fileInput.value = "";
-            document.getElementById('photo-title-input').value = "";
-            document.getElementById('photo-desc-input').value = "";
-            document.getElementById('upload-modal').style.display = "none";
-          } catch (err) {
-            alert("Error uploading to Firebase. Make sure your Firebase Config is active!");
-          } finally {
-            submitPhotoBtn.innerText = "Add Photo";
-            submitPhotoBtn.disabled = false;
-          }
+          fileInput.value = "";
+          document.getElementById('photo-title-input').value = "";
+          document.getElementById('photo-desc-input').value = "";
+          document.getElementById('upload-modal').style.display = "none";
+          
+          submitPhotoBtn.innerText = "Add Photo";
+          submitPhotoBtn.disabled = false;
+          
+          loadPhotos();
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
         alert("Please select a photo first!");
       }
     });
+
+    loadPhotos();
   </script>
 
-  <!-- Non-Module UI Logic (Animations, Search & Theme) -->
+  <!-- Non-Module UI Logic (Animations, Search, Theme & Audio) -->
   <script>
     // --- 1. Typewriter Animation ---
     const textToType = "Welcome to Photobs";
@@ -555,23 +532,22 @@
       themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
     });
 
-    // --- 4. Audio Plays Only On Tab Switch or Minimize ---
+    // --- 4. Precise Audio Control on Minimize/Tab Switch ---
     const audio = document.getElementById('bg-music');
     let userHasInteracted = false;
 
-    // User-er 1-ta click touch record rakhar jonno
     window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
     window.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
 
-    // Page hide hole (tab switch ba minimize) audio bajbe
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (userHasInteracted) {
+          audio.currentTime = 0; // গান সবসময় শুরু থেকে বাজবে
           audio.play().catch(err => console.log("Audio play error: ", err));
         }
       } else {
-        // Website-e phire ashle audio bondho hoye jabe
-        audio.pause();
+        audio.pause(); // পেজে ফিরে এলেই গান সাথে সাথে বন্ধ হয়ে যাবে
+        audio.currentTime = 0;
       }
     });
 
