@@ -96,6 +96,7 @@
       font-size: 1.8rem;
       font-weight: bold;
       color: #ff3e6c;
+      cursor: pointer;
     }
 
     .search-container {
@@ -155,10 +156,44 @@
       color: inherit;
     }
 
+    /* --- Category Filter Bar --- */
+    .filter-bar {
+      max-width: 1200px;
+      margin: 20px auto 0;
+      padding: 0 20px;
+      display: flex;
+      gap: 10px;
+      overflow-x: auto;
+      padding-bottom: 5px;
+    }
+
+    .filter-chip {
+      background: #e4e6eb;
+      border: none;
+      padding: 6px 16px;
+      border-radius: 20px;
+      cursor: pointer;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #333;
+      white-space: nowrap;
+      transition: 0.2s;
+    }
+
+    body.dark-mode .filter-chip {
+      background: #2a2a2a;
+      color: #ddd;
+    }
+
+    .filter-chip.active, .filter-chip:hover {
+      background: #ff3e6c;
+      color: white;
+    }
+
     /* --- Gallery Grid --- */
     .container {
       max-width: 1200px;
-      margin: 30px auto;
+      margin: 20px auto 40px;
       padding: 0 20px;
     }
 
@@ -221,10 +256,21 @@
       font-size: 0.8rem;
       color: #ff3e6c;
       font-weight: 500;
-      margin-top: 4px;
     }
 
-    .card-footer {
+    .category-tag {
+      display: inline-block;
+      background: rgba(255, 62, 108, 0.1);
+      color: #ff3e6c;
+      padding: 2px 8px;
+      border-radius: 6px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      width: fit-content;
+    }
+
+    /* Card Actions (Like, Share, Download, Delete) */
+    .card-actions {
       display: flex;
       justify-content: space-between;
       align-items: center;
@@ -233,30 +279,113 @@
       border-top: 1px solid #eee;
     }
 
-    body.dark-mode .card-footer {
+    body.dark-mode .card-actions {
       border-top-color: #333;
+    }
+
+    .action-group {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .like-btn, .share-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.9rem;
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      color: inherit;
+      font-weight: 600;
+    }
+
+    .like-btn.liked {
+      color: #ff3e6c;
     }
 
     .download-btn {
       background: #007bff;
       color: white;
       text-decoration: none;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
     }
 
     .delete-btn {
       background: #dc3545;
       color: white;
       border: none;
-      padding: 6px 12px;
+      padding: 5px 10px;
       border-radius: 6px;
-      font-size: 0.82rem;
+      font-size: 0.78rem;
       cursor: pointer;
     }
 
-    /* Modals (Upload & Full Image) */
+    /* Comments Section */
+    .comments-section {
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px dashed #ddd;
+      font-size: 0.82rem;
+    }
+
+    body.dark-mode .comments-section {
+      border-top-color: #333;
+    }
+
+    .comments-list {
+      max-height: 80px;
+      overflow-y: auto;
+      margin-bottom: 6px;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .comment-item {
+      background: #f0f2f5;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+
+    body.dark-mode .comment-item {
+      background: #2a2a2a;
+    }
+
+    .comment-input-box {
+      display: flex;
+      gap: 5px;
+    }
+
+    .comment-input {
+      flex: 1;
+      padding: 4px 8px;
+      border-radius: 4px;
+      border: 1px solid #ccc;
+      font-size: 0.78rem;
+      outline: none;
+    }
+
+    body.dark-mode .comment-input {
+      background: #222;
+      border-color: #444;
+      color: #fff;
+    }
+
+    .comment-submit-btn {
+      background: #28a745;
+      color: white;
+      border: none;
+      padding: 4px 8px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 0.75rem;
+    }
+
+    /* Modals */
     .modal {
       display: none;
       position: fixed;
@@ -286,7 +415,7 @@
       color: #fff;
     }
 
-    .modal-content input, .modal-content textarea {
+    .modal-content input, .modal-content textarea, .modal-content select {
       width: 100%;
       padding: 9px 12px;
       border-radius: 6px;
@@ -294,7 +423,7 @@
       outline: none;
     }
 
-    body.dark-mode .modal-content input, body.dark-mode .modal-content textarea {
+    body.dark-mode .modal-content input, body.dark-mode .modal-content textarea, body.dark-mode .modal-content select {
       background: #333;
       border-color: #555;
       color: #fff;
@@ -325,7 +454,6 @@
       cursor: pointer;
     }
 
-    /* Full View Modal */
     #fullview-modal img {
       max-width: 90vw;
       max-height: 85vh;
@@ -355,30 +483,33 @@
 
   <!-- Header -->
   <header>
-    <div class="logo">Photobs</div>
+    <div class="logo" onclick="filterCategory('All')">Photobs</div>
 
     <div class="search-container">
       <input type="text" id="search-input" class="search-input" placeholder="🔍 Search photos or uploader...">
     </div>
 
     <div class="nav-controls">
-      <!-- PWA Install Button -->
       <button id="install-btn" class="toggle-btn" style="display: none; background: #28a745; color: white; border: none; font-weight: bold;">
         📲 Install App
       </button>
-      <!-- PC Install / App Button -->
-<button id="pc-install-btn" class="toggle-btn" onclick="alert('Open this website in Google Chrome or Microsoft Edge on your PC, then click the Install button in the browser address bar to use it as a Desktop App!')" style="background: #007bff; color: white; border: none; font-weight: bold;">
-  💻 PC Version
-</button>
-      
-
-      <!-- Upload Button (+) -->
+      <button id="pc-install-btn" class="toggle-btn" onclick="alert('Open this website in Google Chrome or Microsoft Edge on your PC, then click the Install button in the browser address bar to use it as a Desktop App!')" style="background: #007bff; color: white; border: none; font-weight: bold;">
+        💻 PC Version
+      </button>
       <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
-
-      <!-- Dark Mode Toggle -->
       <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
     </div>
   </header>
+
+  <!-- Category Filter Bar -->
+  <div class="filter-bar" id="filter-bar">
+    <button class="filter-chip active" onclick="filterCategory('All')">🌟 All</button>
+    <button class="filter-chip" onclick="filterCategory('Nature')">🌿 Nature</button>
+    <button class="filter-chip" onclick="filterCategory('Portrait')">👤 Portrait</button>
+    <button class="filter-chip" onclick="filterCategory('Travel')">✈️ Travel</button>
+    <button class="filter-chip" onclick="filterCategory('Animation')">🎬 Animation</button>
+    <button class="filter-chip" onclick="filterCategory('Others')">📌 Others</button>
+  </div>
 
   <!-- Gallery -->
   <div class="container">
@@ -395,7 +526,14 @@
       <input type="text" id="uploader-name" placeholder="Your Name...">
       <input type="email" id="uploader-email" placeholder="Your Email...">
       <input type="text" id="photo-title-input" placeholder="Photo Title...">
-      <textarea id="photo-desc-input" rows="3" placeholder="Photo Description..."></textarea>
+      <select id="photo-category">
+        <option value="Nature">Nature</option>
+        <option value="Portrait">Portrait</option>
+        <option value="Travel">Travel</option>
+        <option value="Animation">Animation</option>
+        <option value="Others" selected>Others</option>
+      </select>
+      <textarea id="photo-desc-input" rows="2" placeholder="Photo Description..."></textarea>
       <div class="modal-buttons">
         <button class="btn-cancel" id="close-upload-btn">Cancel</button>
         <button class="btn-submit" id="submit-photo-btn">Add Photo</button>
@@ -413,34 +551,130 @@
 
   <!-- Gallery Script -->
   <script>
+    let currentCategory = 'All';
     const gallery = document.getElementById('gallery');
     
     function loadPhotos() {
       const photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
       gallery.innerHTML = "";
 
-      if (photos.length === 0) {
-        gallery.innerHTML = "<div id='loading-msg'>No photos uploaded yet. Click '+' to upload!</div>";
+      const filteredPhotos = photos.filter(photo => {
+        if (currentCategory === 'All') return true;
+        return (photo.category || 'Others') === currentCategory;
+      });
+
+      if (filteredPhotos.length === 0) {
+        gallery.innerHTML = "<div id='loading-msg'>No photos found in this category. Click '+' to upload!</div>";
         return;
       }
 
-      photos.forEach((photo, index) => {
+      filteredPhotos.forEach((photo) => {
+        const realIndex = photos.findIndex(p => p.timestamp === photo.timestamp);
+        
         const card = document.createElement('div');
         card.className = 'photo-card';
+        
+        let commentsHtml = '';
+        if (photo.comments && photo.comments.length > 0) {
+          photo.comments.forEach(c => {
+            commentsHtml += `<div class="comment-item"><b>${c.name}:</b> ${c.text}</div>`;
+          });
+        } else {
+          commentsHtml = `<div class="comment-item" style="color:#888;">No comments yet.</div>`;
+        }
+
         card.innerHTML = `
           <img src="${photo.imageUrl}" alt="${photo.title}" onclick="openFullImage('${photo.imageUrl}')">
           <div class="photo-info">
+            <span class="category-tag">${photo.category || 'Others'}</span>
             <div class="photo-title">${photo.title}</div>
             <div class="photo-desc">${photo.desc}</div>
             <div class="photo-author">👤 ${photo.uploaderName || 'Anonymous'} (${photo.uploaderEmail || 'No Email'})</div>
-            <div class="card-footer">
-              <a href="${photo.imageUrl}" download="${photo.title}.jpg" class="download-btn">Download</a>
-              <button class="delete-btn" onclick="deletePhoto(${index})">🗑️ Delete</button>
+            
+            <div class="card-actions">
+              <div class="action-group">
+                <button class="like-btn ${photo.isLiked ? 'liked' : ''}" onclick="toggleLike(${realIndex})">
+                  ❤️ <span>${photo.likes || 0}</span>
+                </button>
+                <button class="share-btn" onclick="sharePhoto('${photo.title}')">
+                  🔗 Share
+                </button>
+              </div>
+              <div class="action-group">
+                <a href="${photo.imageUrl}" download="${photo.title}.jpg" class="download-btn">Download</a>
+                <button class="delete-btn" onclick="deletePhoto(${realIndex})">🗑️</button>
+              </div>
             </div>
+
+            <!-- Comments Section -->
+            <div class="comments-section">
+              <div class="comments-list" id="comment-list-${realIndex}">
+                ${commentsHtml}
+              </div>
+              <div class="comment-input-box">
+                <input type="text" id="comment-text-${realIndex}" class="comment-input" placeholder="Write a comment...">
+                <button class="comment-submit-btn" onclick="addComment(${realIndex})">Post</button>
+              </div>
+            </div>
+
           </div>
         `;
         gallery.appendChild(card);
       });
+    }
+
+    function filterCategory(cat) {
+      currentCategory = cat;
+      document.querySelectorAll('.filter-chip').forEach(btn => {
+        btn.classList.remove('active');
+        if (btn.innerText.includes(cat) || (cat === 'All' && btn.innerText.includes('All'))) {
+          btn.classList.add('active');
+        }
+      });
+      loadPhotos();
+    }
+
+    function toggleLike(index) {
+      let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+      if (!photos[index].likes) photos[index].likes = 0;
+      
+      if (photos[index].isLiked) {
+        photos[index].likes -= 1;
+        photos[index].isLiked = false;
+      } else {
+        photos[index].likes += 1;
+        photos[index].isLiked = true;
+      }
+      localStorage.setItem('photobs_photos', JSON.stringify(photos));
+      loadPhotos();
+    }
+
+    function sharePhoto(title) {
+      if (navigator.share) {
+        navigator.share({
+          title: title,
+          text: 'Check out this amazing photo on Photobs!',
+          url: window.location.href
+        }).catch(err => console.log(err));
+      } else {
+        navigator.clipboard.writeText(window.location.href);
+        alert("Website link copied to clipboard!");
+      }
+    }
+
+    function addComment(index) {
+      const input = document.getElementById(`comment-text-${index}`);
+      const text = input.value.trim();
+      if (!text) return;
+
+      let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+      if (!photos[index].comments) photos[index].comments = [];
+      
+      let commenterName = prompt("Enter your name for the comment:", "Visitor") || "Anonymous";
+      photos[index].comments.push({ name: commenterName, text: text });
+      
+      localStorage.setItem('photobs_photos', JSON.stringify(photos));
+      loadPhotos();
     }
 
     function openFullImage(url) {
@@ -463,6 +697,7 @@
       const nameInput = document.getElementById('uploader-name').value || "Anonymous";
       const emailInput = document.getElementById('uploader-email').value || "N/A";
       const titleInput = document.getElementById('photo-title-input').value || "Untitled Photo";
+      const catInput = document.getElementById('photo-category').value;
       const descInput = document.getElementById('photo-desc-input').value || "No description provided.";
 
       if (fileInput.files && fileInput.files[0]) {
@@ -504,191 +739,4 @@
               photos.unshift({
                 uploaderName: nameInput,
                 uploaderEmail: emailInput,
-                title: titleInput,
-                desc: descInput,
-                imageUrl: compressedBase64,
-                timestamp: new Date().getTime()
-              });
-
-              localStorage.setItem('photobs_photos', JSON.stringify(photos));
-
-              fileInput.value = "";
-              document.getElementById('uploader-name').value = "";
-              document.getElementById('uploader-email').value = "";
-              document.getElementById('photo-title-input').value = "";
-              document.getElementById('photo-desc-input').value = "";
-              document.getElementById('upload-modal').style.display = "none";
-              loadPhotos();
-            } catch (err) {
-              alert("Storage is full!");
-            } finally {
-              submitPhotoBtn.innerText = "Add Photo";
-              submitPhotoBtn.disabled = false;
-            }
-          };
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        alert("Please select a photo first!");
-      }
-    });
-
-    loadPhotos();
-  </script>
-
-  <!-- UI & PWA Script -->
-  <script>
-    // Typewriter
-    const textToType = "Welcome to Photobs";
-    let typeIndex = 0;
-    const typewriterEl = document.getElementById('typewriter-text');
-    const authorEl = document.getElementById('author-text');
-
-    function typeWriter() {
-      if (typeIndex < textToType.length) {
-        typewriterEl.innerHTML += textToType.charAt(typeIndex);
-        typeIndex++;
-        setTimeout(typeWriter, 100);
-      } else {
-        authorEl.style.opacity = "1";
-        setTimeout(() => {
-          const splash = document.getElementById('splash-screen');
-          splash.style.transition = "opacity 0.8s ease";
-          splash.style.opacity = "0";
-          setTimeout(() => splash.style.display = "none", 800);
-        }, 3800);
-      }
-    }
-
-    // Fireworks
-    const canvas = document.getElementById('fireworks');
-    const ctx = canvas.getContext('2d');
-    canvas.width = window.innerWidth;
-    canvas.height = window.innerHeight;
-
-    class Particle {
-      constructor(x, y, color) {
-        this.x = x;
-        this.y = y;
-        this.color = color;
-        this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
-        this.alpha = 1;
-        this.friction = 0.98;
-      }
-      draw() {
-        ctx.save();
-        ctx.globalAlpha = this.alpha;
-        ctx.beginPath();
-        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
-        ctx.fillStyle = this.color;
-        ctx.fill();
-        ctx.restore();
-      }
-      update() {
-        this.velocity.x *= this.friction;
-        this.velocity.y *= this.friction;
-        this.x += this.velocity.x;
-        this.y += this.velocity.y;
-        this.alpha -= 0.015;
-      }
-    }
-
-    let particles = [];
-    const colors = ['#ff0055', '#00ffff', '#ffff00', '#00ff66', '#ff9900'];
-
-    function createFirework() {
-      const x = Math.random() * canvas.width;
-      const y = Math.random() * (canvas.height * 0.6);
-      const color = colors[Math.floor(Math.random() * colors.length)];
-      for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
-    }
-
-    setInterval(createFirework, 400);
-
-    function animateFireworks() {
-      ctx.fillStyle = 'rgba(8, 8, 16, 0.2)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-      particles.forEach((p, idx) => {
-        if (p.alpha > 0) { p.update(); p.draw(); }
-        else { particles.splice(idx, 1); }
-      });
-      requestAnimationFrame(animateFireworks);
-    }
-
-    window.addEventListener('DOMContentLoaded', () => {
-      typeWriter();
-      animateFireworks();
-    });
-
-    // Dark Mode
-    const themeBtn = document.getElementById('theme-btn');
-    themeBtn.addEventListener('click', () => {
-      document.body.classList.toggle('dark-mode');
-      themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
-    });
-
-    // Audio
-    const audio = document.getElementById('bg-music');
-    let userHasInteracted = false;
-    window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
-    window.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
-
-    document.addEventListener('visibilitychange', () => {
-      if (document.visibilityState === 'hidden') {
-        if (userHasInteracted) {
-          audio.currentTime = 0;
-          audio.play().catch(err => console.log(err));
-        }
-      } else {
-        audio.pause();
-        audio.currentTime = 0;
-      }
-    });
-
-    // Search
-    const searchInput = document.getElementById('search-input');
-    searchInput.addEventListener('input', (e) => {
-      const query = e.target.value.toLowerCase();
-      const cards = document.querySelectorAll('.photo-card');
-      cards.forEach(card => {
-        const text = card.innerText.toLowerCase();
-        card.style.display = text.includes(query) ? "flex" : "none";
-      });
-    });
-
-    // Modal Control
-    document.getElementById('open-upload-btn').addEventListener('click', () => {
-      document.getElementById('upload-modal').style.display = "flex";
-    });
-    document.getElementById('close-upload-btn').addEventListener('click', () => {
-      document.getElementById('upload-modal').style.display = "none";
-    });
-
-    // PWA Install Logic
-    let deferredPrompt;
-    const installBtn = document.getElementById('install-btn');
-
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      deferredPrompt = e;
-      if (installBtn) installBtn.style.display = 'inline-block';
-    });
-
-    if (installBtn) {
-      installBtn.addEventListener('click', async () => {
-        if (deferredPrompt) {
-          deferredPrompt.prompt();
-          const { outcome } = await deferredPrompt.userChoice;
-          if (outcome === 'accepted') console.log('User accepted prompt');
-          deferredPrompt = null;
-          installBtn.style.display = 'none';
-        }
-      });
-    }
-
-    window.addEventListener('appinstalled', () => {
-      if (installBtn) installBtn.style.display = 'none';
-    });
-  </script>
-</body>
-</html>
+                title: titleInput
