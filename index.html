@@ -355,10 +355,10 @@
     </div>
   </div>
 
-  <!-- Background Audio (Without Loop, plays only on hide/minimize) -->
+  <!-- Background Audio -->
   <audio id="bg-music" src="channa.mp3"></audio>
 
-  <!-- Gallery & Local Storage Script -->
+  <!-- Gallery & Compressed Storage Script -->
   <script>
     const gallery = document.getElementById('gallery');
     
@@ -395,36 +395,66 @@
       const descInput = document.getElementById('photo-desc-input').value || "No description provided.";
 
       if (fileInput.files && fileInput.files[0]) {
-        submitPhotoBtn.innerText = "Uploading...";
+        submitPhotoBtn.innerText = "Compressing & Uploading...";
         submitPhotoBtn.disabled = true;
 
         const reader = new FileReader();
         reader.onload = function(e) {
-          const imageBase64 = e.target.result;
-          
-          let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
-          photos.unshift({
-            title: titleInput,
-            desc: descInput,
-            imageUrl: imageBase64,
-            timestamp: new Date().getTime()
-          });
+          const img = new Image();
+          img.src = e.target.result;
+          img.onload = function() {
+            const canvas = document.createElement('canvas');
+            const MAX_WIDTH = 800;
+            const MAX_HEIGHT = 800;
+            let width = img.width;
+            let height = img.height;
 
-          localStorage.setItem('photobs_photos', JSON.stringify(photos));
+            if (width > height) {
+              if (width > MAX_WIDTH) {
+                height *= MAX_WIDTH / width;
+                width = MAX_WIDTH;
+              }
+            } else {
+              if (height > MAX_HEIGHT) {
+                width *= MAX_HEIGHT / height;
+                height = MAX_HEIGHT;
+              }
+            }
 
-          fileInput.value = "";
-          document.getElementById('photo-title-input').value = "";
-          document.getElementById('photo-desc-input').value = "";
-          document.getElementById('upload-modal').style.display = "none";
-          
-          submitPhotoBtn.innerText = "Add Photo";
-          submitPhotoBtn.disabled = false;
-          
-          loadPhotos();
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, width, height);
+            
+            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
+
+            try {
+              let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+              photos.unshift({
+                title: titleInput,
+                desc: descInput,
+                imageUrl: compressedBase64,
+                timestamp: new Date().getTime()
+              });
+
+              localStorage.setItem('photobs_photos', JSON.stringify(photos));
+
+              fileInput.value = "";
+              document.getElementById('photo-title-input').value = "";
+              document.getElementById('photo-desc-input').value = "";
+              document.getElementById('upload-modal').style.display = "none";
+              loadPhotos();
+            } catch (err) {
+              alert("স্টোরেজ ভর্তি হয়ে গেছে! দয়া করে অন্য ছবি ট্রাই করুন।");
+            } finally {
+              submitPhotoBtn.innerText = "Add Photo";
+              submitPhotoBtn.disabled = false;
+            }
+          };
         };
         reader.readAsDataURL(fileInput.files[0]);
       } else {
-        alert("Please select a photo first!");
+        alert("দয়া করে প্রথমে একটি ছবি সিলেক্ট করুন!");
       }
     });
 
@@ -532,7 +562,7 @@
       themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
     });
 
-    // --- 4. Precise Audio Control on Minimize/Tab Switch ---
+    // --- 4. Audio Control on Minimize/Tab Switch ---
     const audio = document.getElementById('bg-music');
     let userHasInteracted = false;
 
@@ -542,11 +572,11 @@
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'hidden') {
         if (userHasInteracted) {
-          audio.currentTime = 0; // গান সবসময় শুরু থেকে বাজবে
+          audio.currentTime = 0;
           audio.play().catch(err => console.log("Audio play error: ", err));
         }
       } else {
-        audio.pause(); // পেজে ফিরে এলেই গান সাথে সাথে বন্ধ হয়ে যাবে
+        audio.pause();
         audio.currentTime = 0;
       }
     });
