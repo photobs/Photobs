@@ -59,42 +59,20 @@
       gap: 15px;
     }
 
-    .splash-logo-box {
-      width: 90px;
-      height: 90px;
-      background: linear-gradient(135deg, #00dfd8, #7928ca, #ff0080);
-      border-radius: 22px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      box-shadow: 0 0 30px rgba(255, 0, 128, 0.6);
-      animation: pulseGlow 2s infinite alternate;
-    }
-
-    @keyframes pulseGlow {
-      0% { transform: scale(1); box-shadow: 0 0 20px rgba(255, 0, 128, 0.5); }
-      100% { transform: scale(1.08); box-shadow: 0 0 40px rgba(0, 223, 216, 0.8); }
-    }
-
-    .splash-logo-box svg {
-      width: 50px;
-      height: 50px;
-      fill: #ffffff;
-    }
-
     .splash-title {
       color: #ffffff;
-      font-size: 2.5rem;
+      font-size: 2.8rem;
       font-weight: bold;
-      min-height: 50px;
-      text-shadow: 0 0 15px rgba(0,255,255,0.5);
+      min-height: 60px;
+      text-shadow: 0 0 20px rgba(0,255,255,0.6);
     }
 
     .splash-subtitle {
-      color: rgba(255, 255, 255, 0.6);
-      font-size: 1.05rem;
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 1.15rem;
       opacity: 0;
       transition: opacity 1.5s ease-in-out;
+      letter-spacing: 1px;
     }
 
     /* --- Header / Navbar --- */
@@ -528,16 +506,10 @@
 </head>
 <body>
 
-  <!-- Splash Screen -->
+  <!-- Splash Screen (Clean without center box) -->
   <div id="splash-screen">
     <canvas id="fireworks"></canvas>
     <div class="splash-content">
-      <div class="splash-logo-box">
-        <!-- Exact Camera SVG Icon -->
-        <svg viewBox="0 0 24 24">
-          <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
-        </svg>
-      </div>
       <h1 class="splash-title" id="typewriter-text"></h1>
       <p class="splash-subtitle" id="author-text">Created by Souptik Panda</p>
     </div>
@@ -547,7 +519,6 @@
   <header>
     <div class="brand-container" onclick="filterCategory('All')">
       <div class="brand-icon">
-        <!-- Exact Camera SVG Icon -->
         <svg viewBox="0 0 24 24">
           <path d="M4 4h3l2-2h6l2 2h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2zm8 3a5 5 0 1 0 0 10 5 5 0 0 0 0-10zm0 2a3 3 0 1 1 0 6 3 3 0 0 1 0-6z"/>
         </svg>
@@ -756,4 +727,21 @@
     }
 
     function deletePhoto(index) {
-    
+      if (confirm("Are you sure you want to delete this photo?")) {
+        let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+        photos.splice(index, 1);
+        localStorage.setItem('photobs_photos', JSON.stringify(photos));
+        loadPhotos();
+      }
+    }
+
+    const submitPhotoBtn = document.getElementById('submit-photo-btn');
+    submitPhotoBtn.addEventListener('click', () => {
+      const fileInput = document.getElementById('photo-file');
+      const nameInput = document.getElementById('uploader-name').value || "Anonymous";
+      const emailInput = document.getElementById('uploader-email').value || "N/A";
+      const titleInput = document.getElementById('photo-title-input').value || "Untitled Photo";
+      const catInput = document.getElementById('photo-category').value;
+      const descInput = document.getElementById('photo-desc-input').value || "No description.";
+
+      if (fileInput.fil
