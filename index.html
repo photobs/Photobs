@@ -740,3 +740,192 @@
                 uploaderName: nameInput,
                 uploaderEmail: emailInput,
                 title: titleInput
+                  nInput,
+                desc: descInput,
+                imageUrl: compressedBase64,
+                likes: 0,
+                isLiked: false,
+                comments: [],
+                timestamp: new Date().getTime()
+              });
+
+              localStorage.setItem('photobs_photos', JSON.stringify(photos));
+
+              fileInput.value = "";
+              document.getElementById('uploader-name').value = "";
+              document.getElementById('uploader-email').value = "";
+              document.getElementById('photo-title-input').value = "";
+              document.getElementById('photo-desc-input').value = "";
+              document.getElementById('upload-modal').style.display = "none";
+              loadPhotos();
+            } catch (err) {
+              alert("Storage is full!");
+            } finally {
+              submitPhotoBtn.innerText = "Add Photo";
+              submitPhotoBtn.disabled = false;
+            }
+          };
+        };
+        reader.readAsDataURL(fileInput.files[0]);
+      } else {
+        alert("Please select a photo first!");
+      }
+    });
+
+    loadPhotos();
+
+    // Typewriter
+    const textToType = "Welcome to Photobs";
+    let typeIndex = 0;
+    const typewriterEl = document.getElementById('typewriter-text');
+    const authorEl = document.getElementById('author-text');
+
+    function typeWriter() {
+      if (typeIndex < textToType.length) {
+        typewriterEl.innerHTML += textToType.charAt(typeIndex);
+        typeIndex++;
+        setTimeout(typeWriter, 100);
+      } else {
+        authorEl.style.opacity = "1";
+        setTimeout(() => {
+          const splash = document.getElementById('splash-screen');
+          splash.style.transition = "opacity 0.8s ease";
+          splash.style.opacity = "0";
+          setTimeout(() => splash.style.display = "none", 800);
+        }, 3800);
+      }
+    }
+
+    // Fireworks
+    const canvas = document.getElementById('fireworks');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+
+    class Particle {
+      constructor(x, y, color) {
+        this.x = x;
+        this.y = y;
+        this.color = color;
+        this.velocity = { x: (Math.random() - 0.5) * 6, y: (Math.random() - 0.5) * 6 };
+        this.alpha = 1;
+        this.friction = 0.98;
+      }
+      draw() {
+        ctx.save();
+        ctx.globalAlpha = this.alpha;
+        ctx.beginPath();
+        ctx.arc(this.x, this.y, 3, 0, Math.PI * 2);
+        ctx.fillStyle = this.color;
+        ctx.fill();
+        ctx.restore();
+      }
+      update() {
+        this.velocity.x *= this.friction;
+        this.velocity.y *= this.friction;
+        this.x += this.velocity.x;
+        this.y += this.velocity.y;
+        this.alpha -= 0.015;
+      }
+    }
+
+    let particles = [];
+    const colors = ['#ff0055', '#00ffff', '#ffff00', '#00ff66', '#ff9900'];
+
+    function createFirework() {
+      const x = Math.random() * canvas.width;
+      const y = Math.random() * (canvas.height * 0.6);
+      const color = colors[Math.floor(Math.random() * colors.length)];
+      for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
+    }
+
+    setInterval(createFirework, 400);
+
+    function animateFireworks() {
+      ctx.fillStyle = 'rgba(8, 8, 16, 0.2)';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      particles.forEach((p, idx) => {
+        if (p.alpha > 0) { p.update(); p.draw(); }
+        else { particles.splice(idx, 1); }
+      });
+      requestAnimationFrame(animateFireworks);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      typeWriter();
+      animateFireworks();
+    });
+
+    // Dark Mode
+    const themeBtn = document.getElementById('theme-btn');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('dark-mode');
+      themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
+    });
+
+    // Audio
+    const audio = document.getElementById('bg-music');
+    let userHasInteracted = false;
+    window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
+    window.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (userHasInteracted) {
+          audio.currentTime = 0;
+          audio.play().catch(err => console.log(err));
+        }
+      } else {
+        audio.pause();
+        audio.currentTime = 0;
+      }
+    });
+
+    // Search
+    const searchInput = document.getElementById('search-input');
+    searchInput.addEventListener('input', (e) => {
+      const query = e.target.value.toLowerCase();
+      const cards = document.querySelectorAll('.photo-card');
+      cards.forEach(card => {
+        const text = card.innerText.toLowerCase();
+        card.style.display = text.includes(query) ? "flex" : "none";
+      });
+    });
+
+    // Modal Control
+    document.getElementById('open-upload-btn').addEventListener('click', () => {
+      document.getElementById('upload-modal').style.display = "flex";
+    });
+    document.getElementById('close-upload-btn').addEventListener('click', () => {
+      document.getElementById('upload-modal').style.display = "none";
+    });
+
+    // PWA Install Logic
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) installBtn.style.display = 'inline-block';
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') console.log('User accepted prompt');
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        }
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installBtn) installBtn.style.display = 'none';
+    });
+  </script>
+</body>
+</html>
+
