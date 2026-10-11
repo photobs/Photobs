@@ -355,7 +355,7 @@
     </div>
   </div>
 
-  <!-- Continuous Background Audio (Channa Mereya Song) -->
+  <!-- Background Audio (Channa Mereya Song) -->
   <audio id="bg-music" loop src="channa.mp3"></audio>
 
   <!-- Firebase SDK Modules -->
@@ -555,22 +555,25 @@
       themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
     });
 
-    // --- 4. Continuous Background Audio ---
+    // --- 4. Audio Plays Only On Tab Switch or Minimize ---
     const audio = document.getElementById('bg-music');
-    let audioStarted = false;
+    let userHasInteracted = false;
 
-    function startAudioOnInteraction() {
-      if (!audioStarted) {
-        audio.play().then(() => {
-          audioStarted = true;
-        }).catch(err => {
-          console.log("Audio waiting for user click");
-        });
+    // User-er 1-ta click touch record rakhar jonno
+    window.addEventListener('click', () => { userHasInteracted = true; }, { once: true });
+    window.addEventListener('touchstart', () => { userHasInteracted = true; }, { once: true });
+
+    // Page hide hole (tab switch ba minimize) audio bajbe
+    document.addEventListener('visibilitychange', () => {
+      if (document.visibilityState === 'hidden') {
+        if (userHasInteracted) {
+          audio.play().catch(err => console.log("Audio play error: ", err));
+        }
+      } else {
+        // Website-e phire ashle audio bondho hoye jabe
+        audio.pause();
       }
-    }
-
-    window.addEventListener('click', startAudioOnInteraction);
-    window.addEventListener('touchstart', startAudioOnInteraction);
+    });
 
     // --- 5. Real-time Search ---
     const searchInput = document.getElementById('search-input');
