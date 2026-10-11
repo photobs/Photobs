@@ -327,12 +327,18 @@
     </div>
 
     <div class="nav-controls">
-      <!-- Upload Button (+) -->
-      <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
+      <div class="nav-controls">
+  <!-- PWA Install Button -->
+  <button id="install-btn" class="toggle-btn" style="display: none; background: #28a745; color: white; border: none; font-weight: bold;">
+    📲 Install App
+  </button>
+  
+  <!-- Upload Button (+) -->
+  <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
 
-      <!-- Dark Mode Toggle -->
-      <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
-    </div>
+  <!-- Dark Mode Toggle -->
+  <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
+      </div>
   </header>
 
   <!-- Main Gallery Grid -->
@@ -608,5 +614,38 @@
       document.getElementById('upload-modal').style.display = "none";
     });
   </script>
+      // --- PWA Install Prompt Logic ---
+    let deferredPrompt;
+    const installBtn = document.getElementById('install-btn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      if (installBtn) {
+        installBtn.style.display = 'inline-block';
+      }
+    });
+
+    if (installBtn) {
+      installBtn.addEventListener('click', async () => {
+        if (deferredPrompt) {
+          deferredPrompt.prompt();
+          const { outcome } = await deferredPrompt.userChoice;
+          if (outcome === 'accepted') {
+            console.log('User accepted the install prompt');
+          }
+          deferredPrompt = null;
+          installBtn.style.display = 'none';
+        }
+      });
+    }
+
+    window.addEventListener('appinstalled', () => {
+      if (installBtn) {
+        installBtn.style.display = 'none';
+      }
+      console.log('PWA was installed');
+    });
+  
 </body>
 </html>
