@@ -854,7 +854,26 @@
   </script>
 
   <!-- UI & PWA Script -->
-  <script>
+   <script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+  import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+  import { getStorage } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-storage.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBxShbUK0fYHY9RemIFavIx_SxQaLlUIA",
+    authDomain: "photobs-ffead.firebaseapp.com",
+    projectId: "photobs-ffead",
+    storageBucket: "photobs-ffead.firebasestorage.app",
+    messagingSenderId: "1097325859601",
+    appId: "1:1097325859601:web:c68130d361621c5952b2b0",
+    measurementId: "G-PX18D6DJFE"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  window.db = getFirestore(app);
+  window.storage = getStorage(app);
+</script>
+  
     // Typewriter
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
