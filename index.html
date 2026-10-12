@@ -863,7 +863,6 @@ if (uploadForm) {
 window.addEventListener('DOMContentLoaded', loadPhotos);
     </script>
 
-<!-- UI & PWA Script -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -879,10 +878,101 @@ const firebaseConfig = {
 };
 
 const app = initializeApp(firebaseConfig);
-window.db = getFirestore(app);
-window.collection = collection;
-window.addDoc = addDoc;
-window.getDocs = getDocs;
+const db = getFirestore(app);
+
+async function loadPhotos() {
+  const photoGrid = document.getElementById('photo-grid');
+  if (!photoGrid) return;
+  photoGrid.innerHTML = '';
+
+  try {
+    const querySnapshot = await getDocs(collection(db, "photos"));
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      card.innerHTML = `
+        <img src="${data.url}" alt="${data.title || 'Photo'}" loading="lazy">
+        <div class="photo-info">
+          <h3>${data.title || 'Untitled'}</h3>
+          <p>${data.desc || ''}</p>
+          <small>By: ${data.uploader || 'Anonymous'}</small>
+        </div>
+      `;
+      photoGrid.appendChild(card);
+    });
+  } catch (err) {
+    console.error("Error loading photos: ", err);
+  }
+}
+
+document.addEventListener('DOMContentLoaded', loadPhotos);
+
+const uploadForm = document.getElementById('upload-form');
+if (uploadForm) {
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('photo-file');
+    const titleInput = document.getElementById('photo-title');
+    const descInput = document.getElementById('photo-desc');
+    const uploaderInput = document.getElementById('uploader-name');
+    const submitBtn = document.getElementById('submit-photo-btn');
+
+    if (!fileInput || !fileInput.files[0]) {
+      alert("Please select a photo first!");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    if (submitBtn) {
+      submitBtn.innerText = "Uploading...";
+      submitBtn.disabled = true;
+    }
+
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = async function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
+
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
+
+        try {
+          await addDoc(collection(db, "photos"), {
+            url: compressedBase64,
+            title: titleInput ? titleInput.value : '',
+            desc: descInput ? descInput.value : '',
+            uploader: uploaderInput ? uploaderInput.value : 'Anonymous',
+            createdAt: new Date()
+          });
+
+          alert("Photo uploaded successfully!");
+          if (uploadForm) uploadForm.reset();
+          const modal = document.getElementById('upload-modal');
+          if (modal) modal.style.display = 'none';
+          
+          loadPhotos();
+        } catch (err) {
+          console.error(err);
+          alert("Upload failed! Check console or Firestore rules.");
+        } finally {
+          if (submitBtn) {
+            submitBtn.innerText = "Add Photo";
+            submitBtn.disabled = false;
+          }
+        }
+      };
+    };
+    reader.readAsDataURL(file);
+  });
+}
 </script>
   
   
