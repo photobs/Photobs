@@ -768,89 +768,86 @@
       }
     }
 
-    const submitPhotoBtn = document.getElementById('submit-photo-btn');
-    submitPhotoBtn.addEventListener('click', () => {
-      const fileInput = document.getElementById('photo-file');
-      const nameInput = document.getElementById('uploader-name').value || "Anonymous";
-      const emailInput = document.getElementById('uploader-email').value || "N/A";
-      const titleInput = document.getElementById('photo-title-input').value || "Untitled Photo";
-      const catInput = document.getElementById('photo-category').value;
-      const descInput = document.getElementById('photo-desc-input').value || "No description provided.";
+    async function loadPhotos() {
+  const photoGrid = document.getElementById('photo-grid');
+  if (!photoGrid) return;
+  photoGrid.innerHTML = '';
 
-      if (fileInput.files && fileInput.files[0]) {
-        submitPhotoBtn.innerText = "Compressing & Uploading...";
-        submitPhotoBtn.disabled = true;
-
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const img = new Image();
-          img.src = e.target.result;
-          img.onload = function() {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 800;
-            const MAX_HEIGHT = 800;
-            let width = img.width;
-            let height = img.height;
-
-            if (width > height) {
-              if (width > MAX_WIDTH) {
-                height *= MAX_WIDTH / width;
-                width = MAX_WIDTH;
-              }
-            } else {
-              if (height > MAX_HEIGHT) {
-                width *= MAX_HEIGHT / height;
-                height = MAX_HEIGHT;
-              }
-            }
-
-            canvas.width = width;
-            canvas.height = height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, width, height);
-            
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.7);
-
-            try {
-              let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
-              photos.unshift({
-                uploaderName: nameInput,
-                uploaderEmail: emailInput,
-                title: titleInput,
-                category: catInput,
-                desc: descInput,
-                imageUrl: compressedBase64,
-                likes: 0,
-                isLiked: false,
-                isBookmarked: false,
-                comments: [],
-                timestamp: new Date().getTime()
-              });
-
-              localStorage.setItem('photobs_photos', JSON.stringify(photos));
-
-              fileInput.value = "";
-              document.getElementById('uploader-name').value = "";
-              document.getElementById('uploader-email').value = "";
-              document.getElementById('photo-title-input').value = "";
-              document.getElementById('photo-desc-input').value = "";
-              document.getElementById('upload-modal').style.display = "none";
-              loadPhotos();
-            } catch (err) {
-              alert("Storage is full!");
-            } finally {
-              submitPhotoBtn.innerText = "Add Photo";
-              submitPhotoBtn.disabled = false;
-            }
-          };
-        };
-        reader.readAsDataURL(fileInput.files[0]);
-      } else {
-        alert("Please select a photo first!");
-      }
+  try {
+    const querySnapshot = await window.getDocs(window.collection(window.db, "photos"));
+    querySnapshot.forEach((doc) => {
+      const data = doc.data();
+      const card = document.createElement('div');
+      card.className = 'photo-card';
+      card.innerHTML = `
+        <img src="${data.url}" alt="${data.title || 'Photo'}" loading="lazy">
+        <div class="photo-info">
+          <h3>${data.title || 'Untitled'}</h3>
+          <p>${data.desc || ''}</p>
+          <small>By: ${data.uploader || 'Anonymous'}</small>
+        </div>
+      `;
+      photoGrid.appendChild(card);
     });
+  } catch (err) {
+    console.error("Error loading photos: ", err);
+  }
+}
 
-    loadPhotos();
+const uploadForm = document.getElementById('upload-form');
+if (uploadForm) {
+  uploadForm.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const fileInput = document.getElementById('photo-file');
+    const titleInput = document.getElementById('photo-title');
+    const descInput = document.getElementById('photo-desc');
+    const uploaderInput = document.getElementById('uploader-name');
+    const submitBtn = document.getElementById('submit-photo-btn');
+
+    if (!fileInput || !fileInput.files[0]) {
+      alert("Please select a photo first!");
+      return;
+    }
+
+    const file = fileInput.files[0];
+    if (submitBtn) {
+      submitBtn.innerText = "Uploading...";
+      submitBtn.disabled = true;
+    }
+
+    try {
+      const storageRef = window.ref(window.storage, 'photos/' + Date.now() + '_' + file.name);
+      const snapshot = await window.uploadBytes(storageRef, file);
+      const downloadURL = await window.getDownloadURL(snapshot.ref);
+
+      await window.addDoc(window.collection(window.db, "photos"), {
+        url: downloadURL,
+        title: titleInput ? titleInput.value : '',
+        desc: descInput ? descInput.value : '',
+        uploader: uploaderInput ? uploaderInput.value : 'Anonymous',
+        createdAt: new Date()
+      });
+
+      alert("Photo uploaded successfully!");
+      if (uploadForm) uploadForm.reset();
+      const modal = document.getElementById('upload-modal');
+      if (modal) modal.style.display = 'none';
+      
+      loadPhotos();
+    } catch (err) {
+      console.error(err);
+      alert("Upload failed! Check console for details.");
+    } finally {
+      if (submitBtn) {
+        submitBtn.innerText = "Add Photo";
+        submitBtn.disabled = false;
+      }
+    }
+  });
+}
+
+window.addEventListener('DOMContentLoaded', loadPhotos);
+        
   </script>
 
 <!-- UI & PWA Script -->
