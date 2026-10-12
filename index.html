@@ -127,23 +127,30 @@
       gap: 12px;
     }
 
-    .btn-icon {
+    /* --- Floating Upload Button (+) --- */
+    .btn-icon-float {
       background: #ff3e6c;
       color: white;
       border: none;
-      width: 42px;
-      height: 42px;
+      width: 58px;
+      height: 58px;
       border-radius: 50%;
-      font-size: 1.6rem;
+      font-size: 2rem;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.2s;
+      position: fixed;
+      bottom: 25px;
+      right: 25px;
+      box-shadow: 0 4px 15px rgba(255, 62, 108, 0.4);
+      z-index: 99;
+      transition: transform 0.2s, background 0.2s;
     }
 
-    .btn-icon:hover {
+    .btn-icon-float:hover {
       transform: scale(1.1);
+      background: #e0355d;
     }
 
     .toggle-btn {
@@ -155,15 +162,25 @@
       font-size: 0.9rem;
       color: inherit;
     }
-        /* --- Category Filter Bar --- */
-    .filter-bar {
+
+    /* --- Controls Bar (Filter + Sorting) --- */
+    .controls-bar {
       max-width: 1200px;
       margin: 20px auto 0;
       padding: 0 20px;
       display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 15px;
+    }
+
+    .filter-bar {
+      display: flex;
       gap: 10px;
       overflow-x: auto;
       padding-bottom: 5px;
+      flex: 1;
     }
 
     .filter-chip {
@@ -187,6 +204,22 @@
     .filter-chip.active, .filter-chip:hover {
       background: #ff3e6c;
       color: white;
+    }
+
+    .sort-select {
+      padding: 7px 14px;
+      border-radius: 20px;
+      border: 1px solid #ccc;
+      background: #fff;
+      font-size: 0.85rem;
+      outline: none;
+      cursor: pointer;
+    }
+
+    body.dark-mode .sort-select {
+      background: #2a2a2a;
+      color: #fff;
+      border-color: #444;
     }
 
     /* --- Gallery Grid --- */
@@ -287,7 +320,7 @@
       align-items: center;
     }
 
-    .like-btn, .share-btn {
+    .like-btn, .share-btn, .bookmark-btn {
       background: none;
       border: none;
       cursor: pointer;
@@ -301,6 +334,10 @@
 
     .like-btn.liked {
       color: #ff3e6c;
+    }
+
+    .bookmark-btn.bookmarked {
+      color: #ffc107;
     }
 
     .card-footer {
@@ -501,19 +538,28 @@
       <button id="pc-install-btn" class="toggle-btn" onclick="alert('Open this website in Google Chrome or Microsoft Edge on your PC, then click the Install button in the browser address bar to use it as a Desktop App!')" style="background: #007bff; color: white; border: none; font-weight: bold;">
         💻 PC Version
       </button>
-      <button class="btn-icon" id="open-upload-btn" title="Upload Photo">+</button>
       <button class="toggle-btn" id="theme-btn">🌙 Dark Mode</button>
     </div>
   </header>
 
-  <!-- Category Filter Bar -->
-  <div class="filter-bar" id="filter-bar">
-    <button class="filter-chip active" onclick="filterCategory('All')">🌟 All</button>
-    <button class="filter-chip" onclick="filterCategory('Nature')">🌿 Nature</button>
-    <button class="filter-chip" onclick="filterCategory('Portrait')">👤 Portrait</button>
-    <button class="filter-chip" onclick="filterCategory('Travel')">✈️ Travel</button>
-    <button class="filter-chip" onclick="filterCategory('Animation')">🎬 Animation</button>
-    <button class="filter-chip" onclick="filterCategory('Others')">📌 Others</button>
+  <!-- Floating Upload Button (+) -->
+  <button class="btn-icon-float" id="open-upload-btn" title="Upload Photo">+</button>
+
+  <!-- Controls Bar (Category Filter + Sort + Bookmarks Filter) -->
+  <div class="controls-bar">
+    <div class="filter-bar" id="filter-bar">
+      <button class="filter-chip active" onclick="filterCategory('All')">🌟 All</button>
+      <button class="filter-chip" onclick="filterCategory('Nature')">🌿 Nature</button>
+      <button class="filter-chip" onclick="filterCategory('Portrait')">👤 Portrait</button>
+      <button class="filter-chip" onclick="filterCategory('Travel')">✈️ Travel</button>
+      <button class="filter-chip" onclick="filterCategory('Animation')">🎬 Animation</button>
+      <button class="filter-chip" onclick="filterCategory('Others')">📌 Others</button>
+      <button class="filter-chip" onclick="filterCategory('Bookmarks')">⭐ Bookmarks</button>
+    </div>
+    <select id="sort-select" class="sort-select" onchange="changeSorting()">
+      <option value="newest">🕒 Newest First</option>
+      <option value="liked">❤️ Most Liked</option>
+    </select>
   </div>
 
   <!-- Gallery -->
@@ -556,19 +602,30 @@
     <!-- Gallery Script -->
   <script>
     let currentCategory = 'All';
+    let currentSort = 'newest';
     const gallery = document.getElementById('gallery');
     
     function loadPhotos() {
       const photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
       gallery.innerHTML = "";
 
-      const filteredPhotos = photos.filter(photo => {
+      let filteredPhotos = photos.filter(photo => {
         if (currentCategory === 'All') return true;
+        if (currentCategory === 'Bookmarks') return photo.isBookmarked === true;
         return (photo.category || 'Others') === currentCategory;
       });
 
+      // Sorting Logic
+      filteredPhotos.sort((a, b) => {
+        if (currentSort === 'newest') {
+          return b.timestamp - a.timestamp;
+        } else if (currentSort === 'liked') {
+          return (b.likes || 0) - (a.likes || 0);
+        }
+      });
+
       if (filteredPhotos.length === 0) {
-        gallery.innerHTML = "<div id='loading-msg'>No photos found in this category. Click '+' to upload!</div>";
+        gallery.innerHTML = "<div id='loading-msg'>No photos found here. Click '+' to upload!</div>";
         return;
       }
 
@@ -599,6 +656,9 @@
               <div class="action-group">
                 <button class="like-btn ${photo.isLiked ? 'liked' : ''}" onclick="toggleLike(${realIndex})">
                   ❤️ <span>${photo.likes || 0}</span>
+                </button>
+                <button class="bookmark-btn ${photo.isBookmarked ? 'bookmarked' : ''}" onclick="toggleBookmark(${realIndex})">
+                  ⭐ <span>${photo.isBookmarked ? 'Saved' : 'Save'}</span>
                 </button>
                 <button class="share-btn" onclick="sharePhoto('${photo.title}')">
                   🔗 Share
@@ -639,6 +699,11 @@
       loadPhotos();
     }
 
+    function changeSorting() {
+      currentSort = document.getElementById('sort-select').value;
+      loadPhotos();
+    }
+
     function toggleLike(index) {
       let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
       if (!photos[index].likes) photos[index].likes = 0;
@@ -650,6 +715,13 @@
         photos[index].likes += 1;
         photos[index].isLiked = true;
       }
+      localStorage.setItem('photobs_photos', JSON.stringify(photos));
+      loadPhotos();
+    }
+
+    function toggleBookmark(index) {
+      let photos = JSON.parse(localStorage.getItem('photobs_photos')) || [];
+      photos[index].isBookmarked = !photos[index].isBookmarked;
       localStorage.setItem('photobs_photos', JSON.stringify(photos));
       loadPhotos();
     }
@@ -750,6 +822,7 @@
                 imageUrl: compressedBase64,
                 likes: 0,
                 isLiked: false,
+                isBookmarked: false,
                 comments: [],
                 timestamp: new Date().getTime()
               });
@@ -778,8 +851,9 @@
     });
 
     loadPhotos();
-        </script>
-          <!-- UI & PWA Script -->
+  </script>
+
+  <!-- UI & PWA Script -->
   <script>
     // Typewriter
     const textToType = "Welcome to Photobs";
