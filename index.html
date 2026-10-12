@@ -249,7 +249,7 @@
       });
     }
     </script>
-      <script>
+        <script>
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
     const typewriterEl = document.getElementById('typewriter-text');
@@ -267,7 +267,11 @@
           if(splash) {
             splash.style.transition = "opacity 0.8s ease";
             splash.style.opacity = "0";
-            setTimeout(() => splash.style.display = "none", 800);
+            setTimeout(() => {
+              splash.style.display = "none";
+              // Ekhane splash screen jawar por fireworks shuru hobe
+              setInterval(createFirework, 400);
+            }, 800);
           }
         }, 1500);
       }
@@ -316,8 +320,6 @@
       for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
     }
 
-    setInterval(createFirework, 400);
-
     function animateFireworks() {
       if(!ctx) return;
       ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
@@ -360,6 +362,6 @@
         document.getElementById('upload-modal').style.display = "flex";
       });
     }
-  </script>
-</body>
+        </script>
+  </body>
 </html>
