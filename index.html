@@ -815,40 +815,53 @@ if (uploadForm) {
       submitBtn.disabled = true;
     }
 
-    try {
-      const storageRef = window.ref(window.storage, 'photos/' + Date.now() + '_' + file.name);
-      const snapshot = await window.uploadBytes(storageRef, file);
-      const downloadURL = await window.getDownloadURL(snapshot.ref);
+    const reader = new FileReader();
+    reader.onload = async function(event) {
+      const img = new Image();
+      img.src = event.target.result;
+      img.onload = async function() {
+        const canvas = document.createElement('canvas');
+        const MAX_WIDTH = 600;
+        const scaleSize = MAX_WIDTH / img.width;
+        canvas.width = MAX_WIDTH;
+        canvas.height = img.height * scaleSize;
 
-      await window.addDoc(window.collection(window.db, "photos"), {
-        url: downloadURL,
-        title: titleInput ? titleInput.value : '',
-        desc: descInput ? descInput.value : '',
-        uploader: uploaderInput ? uploaderInput.value : 'Anonymous',
-        createdAt: new Date()
-      });
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
 
-      alert("Photo uploaded successfully!");
-      if (uploadForm) uploadForm.reset();
-      const modal = document.getElementById('upload-modal');
-      if (modal) modal.style.display = 'none';
-      
-      loadPhotos();
-    } catch (err) {
-      console.error(err);
-      alert("Upload failed! Check console for details.");
-    } finally {
-      if (submitBtn) {
-        submitBtn.innerText = "Add Photo";
-        submitBtn.disabled = false;
-      }
-    }
+        try {
+          await window.addDoc(window.collection(window.db, "photos"), {
+            url: compressedBase64,
+            title: titleInput ? titleInput.value : '',
+            desc: descInput ? descInput.value : '',
+            uploader: uploaderInput ? uploaderInput.value : 'Anonymous',
+            createdAt: new Date()
+          });
+
+          alert("Photo uploaded successfully!");
+          if (uploadForm) uploadForm.reset();
+          const modal = document.getElementById('upload-modal');
+          if (modal) modal.style.display = 'none';
+          
+          loadPhotos();
+        } catch (err) {
+          console.error(err);
+          alert("Upload failed! Check console or Firestore rules.");
+        } finally {
+          if (submitBtn) {
+            submitBtn.innerText = "Add Photo";
+            submitBtn.disabled = false;
+          }
+        }
+      };
+    };
+    reader.readAsDataURL(file);
   });
 }
 
 window.addEventListener('DOMContentLoaded', loadPhotos);
-        
-  </script>
+    </script>
 
 <!-- UI & PWA Script -->
 <script type="module">
