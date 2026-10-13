@@ -4,146 +4,200 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Photobs</title>
+  
+  <!-- PWA & App Icons -->
+  <link rel="icon" type="image/png" href="icon.png">
+  <link rel="apple-touch-icon" href="icon.png">
+  <link rel="manifest" href="manifest.json">
+
+  <!-- Tailwind CSS & FontAwesome Icons -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
   <style>
-    :root {
-      --bg-color: #0d1117;
-      --card-bg: #161b22;
-      --text-color: #c9d1d9;
-      --accent-color: #58a6ff;
-    }
-
-    body.dark-mode {
-      --bg-color: #ffffff;
-      --card-bg: #f6f8fa;
-      --text-color: #24292e;
-      --accent-color: #0366d6;
-    }
-
+    /* Unique Dynamic Animated Background */
     body {
-      background-color: var(--bg-color);
-      color: var(--text-color);
-      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-      margin: 0;
-      padding: 0;
-      transition: background 0.3s, color 0.3s;
+      background: linear-gradient(-45deg, #0f172a, #1e1b4b, #311042, #0284c7);
+      background-size: 400% 400%;
+      animation: gradientBG 15s ease infinite;
+      color: #f8fafc;
+      min-height: 100vh;
     }
 
-    #splash-screen {
-      position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: #000;
-      display: flex; flex-direction: column;
-      justify-content: center; align-items: center;
-      z-index: 9999;
+    @keyframes gradientBG {
+      0% { background-position: 0% 50%; }
+      50% { background-position: 100% 50%; }
+      100% { background-position: 0% 50%; }
     }
 
-    #typewriter-text { font-size: 2rem; color: #fff; margin-bottom: 10px; }
-    #author-text { font-size: 1rem; color: #888; opacity: 0; transition: opacity 1s; }
-
-    #fireworks {
-      position: fixed; top: 0; left: 0;
-      width: 100%; height: 100%;
-      pointer-events: none; z-index: 9998;
+    /* Light Mode Theme */
+    body.light-mode {
+      background: #f8fafc;
+      color: #0f172a;
+    }
+    body.light-mode .bg-card {
+      background-color: #ffffff;
+      color: #0f172a;
+      border: 1px solid #e2e8f0;
+    }
+    body.light-mode .text-muted {
+      color: #64748b;
     }
 
-    header {
-      padding: 20px; text-align: center;
-      border-bottom: 1px solid #30363d;
+    .bg-card {
+      background-color: rgba(30, 41, 59, 0.8);
+      backdrop-filter: blur(12px);
     }
 
-    .controls {
-      display: flex; justify-content: center;
-      gap: 10px; margin-top: 15px; flex-wrap: wrap;
+    /* Typewriter Cursor */
+    .typing::after {
+      content: '|';
+      animation: blink 0.7s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
     }
 
-    input[type="text"] {
-      padding: 8px 12px; border-radius: 6px;
-      border: 1px solid #30363d; background: #21262d;
-      color: #fff; outline: none;
+    /* Custom Scrollbar */
+    ::-webkit-scrollbar {
+      width: 6px;
     }
-
-    button {
-      padding: 8px 16px; border-radius: 6px;
-      border: none; background: var(--accent-color);
-      color: #fff; cursor: pointer; font-weight: bold;
-    }
-
-    #photo-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-      gap: 20px; padding: 20px;
-    }
-
-    .photo-card {
-      background: var(--card-bg); border-radius: 8px;
-      overflow: hidden; border: 1px solid #30363d;
-      display: flex; flex-direction: column;
-    }
-
-    .photo-card img {
-      width: 100%; height: 200px;
-      object-fit: cover;
-    }
-
-    .photo-info { padding: 15px; }
-
-    .modal {
-      display: none; position: fixed;
-      top: 0; left: 0; width: 100%; height: 100%;
-      background: rgba(0, 0, 0, 0.8);
-      justify-content: center; align-items: center; z-index: 10000;
-    }
-
-    .modal-content {
-      background: var(--card-bg); padding: 20px;
-      border-radius: 8px; width: 90%; max-width: 400px;
-      display: flex; flex-direction: column; gap: 10px;
+    ::-webkit-scrollbar-thumb {
+      background: #3b82f6;
+      border-radius: 10px;
     }
   </style>
 </head>
-<body>
+<body class="transition-colors duration-300 flex flex-col relative min-h-screen">
 
-  <div id="splash-screen">
-    <div id="typewriter-text"></div>
-    <div id="author-text">Created by Souptik</div>
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
+    <div class="text-center px-4">
+      <h1 id="typewriter-text" class="text-3xl md:text-5xl font-extrabold tracking-wider text-blue-400 mb-3 typing"></h1>
+      <p id="author-text" class="text-lg md:text-xl text-white/40 opacity-0 transition-opacity duration-1000 font-medium">
+        Created by <span class="text-blue-400 font-semibold">Souptik Panda</span>
+      </p>
+    </div>
   </div>
 
-  <canvas id="fireworks"></canvas>
+  <!-- FIREWORKS CANVAS -->
+  <canvas id="fireworks-canvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
 
-  <header>
-    <h1>Photobs</h1>
-    <div class="controls">
-      <input type="text" id="search-input" placeholder="Search photos...">
-      <button id="open-upload-btn">Upload Photo</button>
-      <button id="theme-btn">☀️ Light Mode</button>
+  <!-- NAVBAR / HEADER -->
+  <header class="sticky top-0 z-30 bg-slate-900/85 backdrop-blur-md border-b border-slate-700/50 px-4 py-3">
+    <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+      
+      <!-- Logo & Title -->
+      <div class="flex items-center gap-3">
+        <img src="icon.png" alt="Photobs Logo" class="w-10 h-10 rounded-xl shadow-md object-cover border border-blue-500/30">
+        <span class="text-2xl font-bold bg-gradient-to-r from-blue-400 to-indigo-400 bg-clip-text text-transparent">Photobs</span>
+      </div>
+
+      <!-- Search Bar -->
+      <div class="flex-1 max-w-md mx-2">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"></i>
+          <input type="text" id="search-input" placeholder="Search photos or categories..." 
+            class="w-full pl-10 pr-4 py-2 text-sm rounded-full bg-slate-800/80 border border-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500 text-white placeholder-slate-400">
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center gap-2">
+        <button id="fav-filter-btn" title="Show Favorites" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
+          <i class="fa-solid fa-heart text-red-500"></i>
+        </button>
+
+        <button id="theme-toggle-btn" title="Toggle Theme" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
+          <i class="fa-solid fa-sun text-yellow-400"></i>
+        </button>
+
+        <!-- Install Button -->
+        <button id="install-btn" title="Install App" class="hidden sm:flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-download"></i> Install App
+        </button>
+      </div>
+    </div>
+
+    <!-- Category Filters -->
+    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-2 text-xs font-medium">
+      <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white" data-cat="all">All</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="nature">Nature</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="sports">Sports</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="technology">Technology</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="people">People</button>
     </div>
   </header>
 
-  <main>
-    <div id="photo-grid"></div>
+  <!-- MAIN GALLERY -->
+  <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
+    <div id="photo-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      <!-- Photos inserted dynamically -->
+    </div>
   </main>
 
-  <div id="upload-modal" class="modal">
-    <div class="modal-content">
-      <h2>Upload Photo</h2>
-      <form id="upload-form">
-        <input type="file" id="photo-file" accept="image/*" required><br><br>
-        <input type="text" id="photo-title" placeholder="Photo Title"><br><br>
-        <input type="text" id="photo-desc" placeholder="Description"><br><br>
-        <input type="text" id="uploader-name" placeholder="Your Name"><br><br>
-        <button type="submit" id="submit-photo-btn">Add Photo</button>
-        <button type="button" onclick="document.getElementById('upload-modal').style.display='none'">Cancel</button>
+  <!-- FLOATING "+" BUTTON FOR UPLOAD -->
+  <button id="open-upload-modal-btn" class="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
+    <i class="fa-solid fa-plus"></i>
+  </button>
+    <!-- UPLOAD MODAL -->
+  <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden px-4">
+    <div class="bg-slate-900 border border-slate-700 bg-card w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+      <h3 class="text-xl font-bold mb-4 text-white">Upload New Photo</h3>
+      
+      <form id="upload-form" class="space-y-4 text-slate-200">
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Choose Photo</label>
+          <input type="file" id="file-input" accept="image/*" required class="w-full text-sm border rounded-lg p-2 bg-slate-800 border-slate-700 text-slate-300">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Name</label>
+          <input type="text" id="uploader-name" placeholder="Souptik Panda" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Gmail</label>
+          <input type="email" id="uploader-email" placeholder="example@gmail.com" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Picture Name</label>
+          <input type="text" id="pic-name" placeholder="Beautiful Sunset" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Category</label>
+          <select id="pic-category" class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+            <option value="nature">Nature</option>
+            <option value="sports">Sports</option>
+            <option value="technology">Technology</option>
+            <option value="people">People</option>
+          </select>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Description</label>
+          <textarea id="pic-desc" rows="3" placeholder="Write description..." class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white"></textarea>
+        </div>
+
+        <div class="flex items-center justify-end gap-3 pt-3">
+          <button type="button" id="close-upload-modal-btn" class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-700 hover:bg-slate-800">Cancel</button>
+          <button type="submit" id="add-photo-btn" class="px-5 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Add Photo</button>
+        </div>
       </form>
     </div>
   </div>
 
-  <audio id="bg-music" loop src=""></audio>
-    <script type="module">
+  <!-- FIREBASE & MAIN SCRIPT -->
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
+    // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBxShbUK0FYH9RemIFavIx_SxQaLlUIA",
+      apiKey: "AIzaSyBxbShbUK0fYHY9RemIFavIx...",
       authDomain: "photobs-ffead.firebaseapp.com",
       projectId: "photobs-ffead",
       storageBucket: "photobs-ffead.appspot.com",
@@ -155,134 +209,36 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    async function loadPhotos() {
-      const photoGrid = document.getElementById('photo-grid');
-      if (!photoGrid) return;
-      photoGrid.innerHTML = '';
-
-      try {
-        const querySnapshot = await getDocs(collection(db, "photos"));
-        querySnapshot.forEach((doc) => {
-          const data = doc.data();
-          const card = document.createElement('div');
-          card.className = 'photo-card';
-          card.innerHTML = `
-            <img src="${data.url}" alt="${data.title || 'Photo'}" loading="lazy">
-            <div class="photo-info">
-              <h3>${data.title || 'Untitled'}</h3>
-              <p>${data.desc || ''}</p>
-              <small>By: ${data.uploader || 'Anonymous'}</small>
-            </div>
-          `;
-          photoGrid.appendChild(card);
-        });
-      } catch (err) {
-        console.error("Error loading photos: ", err);
-      }
-    }
-
-    document.addEventListener('DOMContentLoaded', loadPhotos);
-
-    const uploadForm = document.getElementById('upload-form');
-    if (uploadForm) {
-      uploadForm.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const fileInput = document.getElementById('photo-file');
-        const titleInput = document.getElementById('photo-title');
-        const descInput = document.getElementById('photo-desc');
-        const uploaderInput = document.getElementById('uploader-name');
-        const submitBtn = document.getElementById('submit-photo-btn');
-
-        if (!fileInput || !fileInput.files[0]) {
-          alert("Please select a photo first!");
-          return;
-        }
-
-        const file = fileInput.files[0];
-        if (submitBtn) {
-          submitBtn.innerText = "Uploading...";
-          submitBtn.disabled = true;
-        }
-
-        const reader = new FileReader();
-        reader.onload = async function(event) {
-          const img = new Image();
-          img.src = event.target.result;
-          img.onload = async function() {
-            const canvas = document.createElement('canvas');
-            const MAX_WIDTH = 600;
-            const scaleSize = MAX_WIDTH / img.width;
-            canvas.width = MAX_WIDTH;
-            canvas.height = img.height * scaleSize;
-
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            const compressedBase64 = canvas.toDataURL('image/jpeg', 0.6);
-
-            try {
-              await addDoc(collection(db, "photos"), {
-                url: compressedBase64,
-                title: titleInput ? titleInput.value : '',
-                desc: descInput ? descInput.value : '',
-                uploader: uploaderInput ? uploaderInput.value : 'Anonymous',
-                createdAt: new Date()
-              });
-
-              alert("Photo uploaded successfully!");
-              if (uploadForm) uploadForm.reset();
-              const modal = document.getElementById('upload-modal');
-              if (modal) modal.style.display = 'none';
-              
-              loadPhotos();
-            } catch (err) {
-              console.error(err);
-              alert("Upload failed! Check console or Firestore rules.");
-            } finally {
-              if (submitBtn) {
-                submitBtn.innerText = "Add Photo";
-                submitBtn.disabled = false;
-              }
-            }
-          };
-        };
-        reader.readAsDataURL(file);
-      });
-    }
-    </script>
-        <script>
+    // TYPEWRITER & SPLASH SCREEN
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
     const typewriterEl = document.getElementById('typewriter-text');
     const authorEl = document.getElementById('author-text');
 
-    function typeWriter() {
+    function startTypewriter() {
       if (typeIndex < textToType.length) {
-        typewriterEl.innerHTML += textToType.charAt(typeIndex);
+        typewriterEl.textContent += textToType.charAt(typeIndex);
         typeIndex++;
-        setTimeout(typeWriter, 100);
+        setTimeout(startTypewriter, 100);
       } else {
-        if(authorEl) authorEl.style.opacity = "1";
+        typewriterEl.classList.remove('typing');
+        authorEl.style.opacity = "1";
         setTimeout(() => {
           const splash = document.getElementById('splash-screen');
-          if(splash) {
-            splash.style.transition = "opacity 0.8s ease";
-            splash.style.opacity = "0";
-            setTimeout(() => {
-              splash.style.display = "none";
-              // Ekhane splash screen jawar por fireworks shuru hobe
-              setInterval(createFirework, 400);
-            }, 800);
-          }
+          splash.style.opacity = "0";
+          setTimeout(() => {
+            splash.style.display = "none";
+            startFireworks();
+          }, 800);
         }, 1500);
       }
     }
 
-    const canvas = document.getElementById('fireworks');
-    const ctx = canvas ? canvas.getContext('2d') : null;
-    if(canvas) {
-      canvas.width = window.innerWidth;
-      canvas.height = window.innerHeight;
-    }
+    // FIREWORKS SYSTEM
+    const canvas = document.getElementById('fireworks-canvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
 
     class Particle {
       constructor(x, y, color) {
@@ -291,7 +247,6 @@
         this.alpha = 1; this.friction = 0.98;
       }
       draw() {
-        if(!ctx) return;
         ctx.save();
         ctx.globalAlpha = this.alpha;
         ctx.beginPath();
@@ -310,20 +265,17 @@
     }
 
     let particles = [];
-    const colors = ['#ff0055', '#00ffff', '#ffff00', '#00ff66', '#ff9900'];
+    const colors = ['#3b82f6', '#06b6d4', '#10b981', '#f59e0b', '#ec4899'];
 
     function createFirework() {
-      if(!canvas) return;
       const x = Math.random() * canvas.width;
-      const y = Math.random() * (canvas.height * 0.6);
+      const y = Math.random() * (canvas.height * 0.5);
       const color = colors[Math.floor(Math.random() * colors.length)];
       for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
     }
 
     function animateFireworks() {
-      if(!ctx) return;
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.2)';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p, idx) => {
         if (p.alpha > 0) { p.update(); p.draw(); }
         else { particles.splice(idx, 1); }
@@ -331,37 +283,25 @@
       requestAnimationFrame(animateFireworks);
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      typeWriter();
+    function startFireworks() {
+      let interval = setInterval(createFirework, 400);
+      setTimeout(() => clearInterval(interval), 4000);
       animateFireworks();
+    }
+
+    // UI CONTROLS & MODAL
+    const themeBtn = document.getElementById('theme-toggle-btn');
+    themeBtn.addEventListener('click', () => {
+      document.body.classList.toggle('light-mode');
     });
 
-    const themeBtn = document.getElementById('theme-btn');
-    if(themeBtn) {
-      themeBtn.addEventListener('click', () => {
-        document.body.classList.toggle('dark-mode');
-        themeBtn.innerText = document.body.classList.contains('dark-mode') ? "☀️ Light Mode" : "🌙 Dark Mode";
-      });
-    }
+    const uploadModal = document.getElementById('upload-modal');
+    document.getElementById('open-upload-modal-btn').addEventListener('click', () => uploadModal.classList.remove('hidden'));
+    document.getElementById('close-upload-modal-btn').addEventListener('click', () => uploadModal.classList.add('hidden'));
 
-    const searchInput = document.getElementById('search-input');
-    if(searchInput) {
-      searchInput.addEventListener('input', (e) => {
-        const query = e.target.value.toLowerCase();
-        const cards = document.querySelectorAll('.photo-card');
-        cards.forEach(card => {
-          const text = card.innerText.toLowerCase();
-          card.style.display = text.includes(query) ? "flex" : "none";
-        });
-      });
-    }
-
-    const openBtn = document.getElementById('open-upload-btn');
-    if(openBtn) {
-      openBtn.addEventListener('click', () => {
-        document.getElementById('upload-modal').style.display = "flex";
-      });
-    }
-        </script>
-  </body>
+    window.addEventListener('DOMContentLoaded', () => {
+      startTypewriter();
+    });
+  </script>
+</body>
 </html>
