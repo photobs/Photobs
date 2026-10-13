@@ -48,10 +48,10 @@
       50% { opacity: 0; }
     }
 
-    /* Fade-in for Transparent Author Text */
+    /* Transparent Author Fade-In */
     @keyframes fadeIn {
       from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 0.7; transform: translateY(0); }
+      to { opacity: 0.5; transform: translateY(0); }
     }
     .fade-in-author {
       animation: fadeIn 1.2s ease-out forwards;
@@ -71,10 +71,10 @@
 
   <!-- SPLASH SCREEN -->
   <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
-    <div class="text-center px-4">
+    <div class="text-center px-4 z-50">
       <h1 id="typewriter-text" class="text-3xl md:text-5xl font-extrabold tracking-wider text-blue-400 mb-3 typing"></h1>
-      <p id="author-text" class="text-lg md:text-xl text-slate-400 opacity-0 font-medium mt-2">
-        Created by <span class="text-blue-300/80 font-semibold">Souptik Panda</span>
+      <p id="author-text" class="text-lg md:text-xl text-slate-300 opacity-0 font-medium mt-2">
+        Created by Souptik Panda
       </p>
     </div>
   </div>
@@ -101,7 +101,7 @@
         </div>
       </div>
 
-      <!-- Action Buttons & Updated Install Buttons -->
+      <!-- Action Buttons & Install Buttons -->
       <div class="flex items-center gap-2">
         <button id="fav-filter-btn" title="Show Favorites" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
           <i class="fa-solid fa-heart text-red-500"></i>
@@ -121,13 +121,15 @@
       </div>
     </div>
 
-    <!-- Category Filters -->
+    <!-- Updated Category Filters (With Travel & Others) -->
     <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-2 text-xs font-medium">
       <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white" data-cat="all">All</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="nature">Nature</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="sports">Sports</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="technology">Technology</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="people">People</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="travel">Travel</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="others">Others</button>
     </div>
   </header>
 
@@ -175,6 +177,8 @@
             <option value="sports">Sports</option>
             <option value="technology">Technology</option>
             <option value="people">People</option>
+            <option value="travel">Travel</option>
+            <option value="others">Others</option>
           </select>
         </div>
 
@@ -200,7 +204,7 @@
   <!-- FIREWORKS & APP SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -235,31 +239,6 @@
 
     document.getElementById('install-mobile-btn').addEventListener('click', triggerInstall);
     document.getElementById('install-pc-btn').addEventListener('click', triggerInstall);
-
-    // TYPEWRITER & SPLASH SCREEN ANIMATION
-    const textToType = "Welcome to Photobs";
-    let typeIndex = 0;
-    const typewriterEl = document.getElementById('typewriter-text');
-    const authorEl = document.getElementById('author-text');
-
-    function startTypewriter() {
-      if (typeIndex < textToType.length) {
-        typewriterEl.textContent += textToType.charAt(typeIndex);
-        typeIndex++;
-        setTimeout(startTypewriter, 100);
-      } else {
-        typewriterEl.classList.remove('typing');
-        authorEl.classList.add('fade-in-author');
-        setTimeout(() => {
-          const splash = document.getElementById('splash-screen');
-          splash.style.opacity = "0";
-          setTimeout(() => {
-            splash.style.display = "none";
-            startFireworks();
-          }, 800);
-        }, 1800);
-      }
-    }
 
     // FIREWORKS SYSTEM
     const canvas = document.getElementById('fireworks-canvas');
@@ -310,10 +289,45 @@
       requestAnimationFrame(animateFireworks);
     }
 
+    let fireworkInterval;
     function startFireworks() {
-      let interval = setInterval(createFirework, 400);
-      setTimeout(() => clearInterval(interval), 3000);
+      fireworkInterval = setInterval(createFirework, 350);
       animateFireworks();
+    }
+
+    function stopFireworks() {
+      clearInterval(fireworkInterval);
+    }
+
+    // TYPEWRITER & SPLASH SCREEN ANIMATION
+    const textToType = "Welcome to Photobs";
+    let typeIndex = 0;
+    const typewriterEl = document.getElementById('typewriter-text');
+    const authorEl = document.getElementById('author-text');
+
+    function startTypewriter() {
+      // Start fireworks immediately alongside typewriter typing
+      startFireworks();
+
+      function typeChar() {
+        if (typeIndex < textToType.length) {
+          typewriterEl.textContent += textToType.charAt(typeIndex);
+          typeIndex++;
+          setTimeout(typeChar, 100);
+        } else {
+          typewriterEl.classList.remove('typing');
+          authorEl.classList.add('fade-in-author');
+          setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = "0";
+            setTimeout(() => {
+              splash.style.display = "none";
+              stopFireworks();
+            }, 800);
+          }, 1800);
+        }
+      }
+      typeChar();
     }
 
     // UI CONTROLS & MODAL
@@ -476,7 +490,7 @@
             loadPhotos();
           });
 
-          // Delete Action (Verified by Uploader Gmail)
+          // Delete Action
           card.querySelector('.delete-btn').addEventListener('click', async (e) => {
             const uploaderEmail = e.currentTarget.getAttribute('data-email');
             const enteredEmail = prompt("Enter the uploader's Gmail to delete this photo:");
