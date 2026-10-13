@@ -103,19 +103,26 @@
         </div>
       </div>
 
-      <!-- Action Buttons -->
+      <!-- Action Buttons & Custom Install Options -->
       <div class="flex items-center gap-2">
+        <!-- Favorites Button -->
         <button id="fav-filter-btn" title="Show Favorites" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
           <i class="fa-solid fa-heart text-red-500"></i>
         </button>
 
+        <!-- Theme Toggle -->
         <button id="theme-toggle-btn" title="Toggle Theme" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
           <i class="fa-solid fa-sun text-yellow-400"></i>
         </button>
 
-        <!-- Install Button (Visible Everywhere) -->
-        <button id="install-btn" title="Install App" class="flex items-center gap-2 px-3 py-1.5 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-download"></i> <span class="hidden sm:inline">Install App</span>
+        <!-- Install Mobile Button -->
+        <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition" title="Install for Mobile">
+          <i class="fa-solid fa-mobile-screen"></i> <span>Mobile</span>
+        </button>
+
+        <!-- Install PC Button -->
+        <button id="install-pc-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition" title="Install for PC">
+          <i class="fa-solid fa-laptop"></i> <span>PC</span>
         </button>
       </div>
     </div>
@@ -130,10 +137,10 @@
     </div>
   </header>
 
-  <!-- MAIN GALLERY -->
+  <!-- MAIN GALLERY GRID -->
   <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full">
     <div id="photo-grid" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-      <!-- Photos inserted dynamically -->
+      <!-- Photos will be loaded dynamically here -->
     </div>
   </main>
 
@@ -184,13 +191,13 @@
 
         <div class="flex items-center justify-end gap-3 pt-3">
           <button type="button" id="close-upload-modal-btn" class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-700 hover:bg-slate-800">Cancel</button>
-          <button type="submit" id="add-photo-btn" class="px-5 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Add Photo</button>
+          <button type="submit" id="add-photo-btn" class="px-5 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Upload Photo</button>
         </div>
       </form>
     </div>
   </div>
 
-  <!-- FIREBASE & MAIN SCRIPT -->
+  <!-- FIREBASE & MAIN APP LOGIC SCRIPT -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, arrayUnion, arrayRemove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
@@ -209,15 +216,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // PWA INSTALL PROMPT LOGIC
+    // PWA INSTALL LOGIC FOR MOBILE & PC
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
     });
 
-    const installBtn = document.getElementById('install-btn');
-    installBtn.addEventListener('click', async () => {
+    const triggerInstall = async () => {
       if (deferredPrompt) {
         deferredPrompt.prompt();
         const { outcome } = await deferredPrompt.userChoice;
@@ -226,9 +232,12 @@
         }
         deferredPrompt = null;
       } else {
-        alert('App is already installed or your browser doesn\'t support direct installation from here. You can use browser menu to install.');
+        alert('App is ready! If prompt does not show, use your browser menu (Chrome Menu -> "Install App" or "Add to Home screen").');
       }
-    });
+    };
+
+    document.getElementById('install-mobile-btn').addEventListener('click', triggerInstall);
+    document.getElementById('install-pc-btn').addEventListener('click', triggerInstall);
 
     // TYPEWRITER & SPLASH SCREEN
     const textToType = "Welcome to Photobs";
@@ -320,8 +329,125 @@
     document.getElementById('open-upload-modal-btn').addEventListener('click', () => uploadModal.classList.remove('hidden'));
     document.getElementById('close-upload-modal-btn').addEventListener('click', () => uploadModal.classList.add('hidden'));
 
+    // UPLOAD & FIRESTORE LOGIC
+    const uploadForm = document.getElementById('upload-form');
+    uploadForm.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const fileInput = document.getElementById('file-input');
+      const uploaderName = document.getElementById('uploader-name').value;
+      const uploaderEmail = document.getElementById('uploader-email').value;
+      const picName = document.getElementById('pic-name').value;
+      const picCategory = document.getElementById('pic-category').value;
+      const picDesc = document.getElementById('pic-desc').value;
+      const addBtn = document.getElementById('add-photo-btn');
+
+      if (fileInput.files.length === 0) return alert('Please select a photo!');
+      const file = fileInput.files[0];
+
+      addBtn.textContent = 'Uploading...';
+      addBtn.disabled = true;
+
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = async () => {
+        try {
+          // Saving image base64 & details into Firestore collection 'photos'
+          await addDoc(collection(db, "photos"), {
+            imageUrl: reader.result,
+            uploaderName,
+            uploaderEmail,
+            picName,
+            picCategory,
+            picDesc,
+            likes: 0,
+            likedUsers: [],
+            comments: [],
+            timestamp: new Date()
+          });
+
+          alert('Photo uploaded successfully!');
+          uploadForm.reset();
+          uploadModal.classList.add('hidden');
+          loadPhotos();
+        } catch (error) {
+          console.error("Error uploading photo: ", error);
+          alert('Failed to upload photo. Please check console.');
+        } finally {
+          addBtn.textContent = 'Upload Photo';
+          addBtn.disabled = false;
+        }
+      };
+    });
+
+    // FETCH AND DISPLAY PHOTOS FROM FIRESTORE
+    async function loadPhotos() {
+      const grid = document.getElementById('photo-grid');
+      grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Loading photos...</p>';
+
+      try {
+        const querySnapshot = await getDocs(collection(db, "photos"));
+        grid.innerHTML = '';
+
+        if (querySnapshot.empty) {
+          grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">No photos uploaded yet. Click the + button to add one!</p>';
+          return;
+        }
+
+        querySnapshot.forEach((documentSnapshot) => {
+          const photo = documentSnapshot.data();
+          const photoId = documentSnapshot.id;
+
+          const card = document.createElement('div');
+          card.className = "bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col";
+          card.innerHTML = `
+            <div class="relative group h-48 overflow-hidden bg-slate-950">
+              <img src="${photo.imageUrl}" alt="${photo.picName}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105">
+              <span class="absolute top-2 right-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md rounded-full text-blue-300">${photo.picCategory}</span>
+            </div>
+            <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+              <div>
+                <h4 class="font-bold text-lg text-white truncate">${photo.picName}</h4>
+                <p class="text-xs text-slate-400">By ${photo.uploaderName}</p>
+                <p class="text-xs text-slate-300 mt-1 line-clamp-2">${photo.picDesc || 'No description'}</p>
+              </div>
+              <div class="flex items-center justify-between pt-2 border-t border-slate-700/55 text-sm text-slate-300">
+                <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn" data-id="${photoId}">
+                  <i class="fa-regular fa-heart"></i> <span>${photo.likes || 0}</span>
+                </button>
+                <button class="flex items-center gap-1.5 hover:text-blue-400 transition comment-btn">
+                  <i class="fa-regular fa-comment"></i> <span>${photo.comments ? photo.comments.length : 0}</span>
+                </button>
+                <button class="flex items-center gap-1.5 hover:text-emerald-400 transition share-btn" data-name="${photo.picName}">
+                  <i class="fa-solid fa-share-nodes"></i>
+                </button>
+              </div>
+            </div>
+          `;
+          grid.appendChild(card);
+        });
+
+        // Add Share Action
+        document.querySelectorAll('.share-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            const title = e.currentTarget.getAttribute('data-name');
+            if (navigator.share) {
+              navigator.share({ title: title, url: window.location.href });
+            } else {
+              navigator.clipboard.writeText(window.location.href);
+              alert('Link copied to clipboard!');
+            }
+          });
+        });
+
+      } catch (error) {
+        console.error("Error loading photos: ", error);
+        grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error loading photos from database.</p>';
+      }
+    }
+
     window.addEventListener('DOMContentLoaded', () => {
       startTypewriter();
+      loadPhotos();
     });
   </script>
 </body>
