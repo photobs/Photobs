@@ -108,7 +108,7 @@
         </button>
 
         <button id="theme-toggle-btn" title="Toggle Theme" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
-          <i class="fa-solid fa-sun text-yellow-400"></i>
+          <i id="theme-icon" class="fa-solid fa-sun text-yellow-400"></i>
         </button>
 
         <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
@@ -121,7 +121,7 @@
       </div>
     </div>
 
-    <!-- Updated Category Filters (With Travel & Others) -->
+    <!-- Category Filters -->
     <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-2 text-xs font-medium">
       <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white" data-cat="all">All</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="nature">Nature</button>
@@ -144,7 +144,6 @@
   <button id="open-upload-modal-btn" class="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
     <i class="fa-solid fa-plus"></i>
   </button>
-  
     <!-- UPLOAD MODAL -->
   <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden px-4">
     <div class="bg-slate-900 border border-slate-700 bg-card w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -300,15 +299,14 @@
       clearInterval(fireworkInterval);
     }
 
-    // TYPEWRITER & SPLASH SCREEN ANIMATION
+    // TYPEWRITER & SPLASH SCREEN ANIMATION (Fireworks start instantly with text)
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
     const typewriterEl = document.getElementById('typewriter-text');
     const authorEl = document.getElementById('author-text');
 
     function startTypewriter() {
-      // Start fireworks immediately alongside typewriter typing
-      startFireworks();
+      startFireworks(); // Start fireworks immediately with text
 
       function typeChar() {
         if (typeIndex < textToType.length) {
@@ -331,10 +329,16 @@
       typeChar();
     }
 
-    // UI CONTROLS & MODAL
+    // THEME TOGGLE WITH ICON CHANGE
     const themeBtn = document.getElementById('theme-toggle-btn');
+    const themeIcon = document.getElementById('theme-icon');
     themeBtn.addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
+      if (document.body.classList.contains('light-mode')) {
+        themeIcon.className = "fa-solid fa-moon text-indigo-600";
+      } else {
+        themeIcon.className = "fa-solid fa-sun text-yellow-400";
+      }
     });
 
     const uploadModal = document.getElementById('upload-modal');
