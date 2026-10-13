@@ -280,7 +280,9 @@
       for (let i = 0; i < 30; i++) particles.push(new Particle(x, y, color));
     }
 
+    let isAnimatingFireworks = true;
     function animateFireworks() {
+      if (!isAnimatingFireworks) return;
       ctx.clearRect(0, 0, canvas.width, canvas.height);
       particles.forEach((p, idx) => {
         if (p.alpha > 0) { p.update(); p.draw(); }
@@ -291,22 +293,26 @@
 
     let fireworkInterval;
     function startFireworks() {
+      isAnimatingFireworks = true;
       fireworkInterval = setInterval(createFirework, 350);
       animateFireworks();
     }
 
     function stopFireworks() {
+      isAnimatingFireworks = false;
       clearInterval(fireworkInterval);
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      canvas.style.display = 'none'; // Completely hide canvas after splash screen
     }
 
-    // TYPEWRITER & SPLASH SCREEN ANIMATION (Fireworks start instantly with text)
+    // TYPEWRITER & SPLASH SCREEN ANIMATION
     const textToType = "Welcome to Photobs";
     let typeIndex = 0;
     const typewriterEl = document.getElementById('typewriter-text');
     const authorEl = document.getElementById('author-text');
 
     function startTypewriter() {
-      startFireworks(); // Start fireworks immediately with text
+      startFireworks();
 
       function typeChar() {
         if (typeIndex < textToType.length) {
