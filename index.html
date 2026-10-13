@@ -123,13 +123,13 @@
 
     <!-- Category Filters -->
     <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-2 text-xs font-medium">
-      <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white" data-cat="all">All</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="nature">Nature</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="sports">Sports</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="technology">Technology</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="people">People</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="travel">Travel</button>
-      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700" data-cat="others">Others</button>
+      <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white transition" data-cat="all">All</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="nature">Nature</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="sports">Sports</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="technology">Technology</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="people">People</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="travel">Travel</button>
+      <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="others">Others</button>
     </div>
   </header>
 
@@ -302,7 +302,7 @@
       isAnimatingFireworks = false;
       clearInterval(fireworkInterval);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      canvas.style.display = 'none'; // Completely hide canvas after splash screen
+      canvas.style.display = 'none';
     }
 
     // TYPEWRITER & SPLASH SCREEN ANIMATION
@@ -335,7 +335,7 @@
       typeChar();
     }
 
-    // THEME TOGGLE WITH ICON CHANGE
+    // THEME TOGGLE
     const themeBtn = document.getElementById('theme-toggle-btn');
     const themeIcon = document.getElementById('theme-icon');
     themeBtn.addEventListener('click', () => {
@@ -404,7 +404,30 @@
       };
     });
 
-    // LOAD & RENDER PHOTOS WITH LIKE, COMMENT, DOWNLOAD & DELETE
+    // CATEGORY & SEARCH FILTER STATE
+    let currentCategory = 'all';
+    let searchQuery = '';
+
+    document.querySelectorAll('.category-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        document.querySelectorAll('.category-btn').forEach(b => {
+          b.classList.remove('bg-blue-600', 'text-white');
+          b.classList.add('bg-slate-800/80', 'text-slate-300', 'border', 'border-slate-700');
+        });
+        const target = e.currentTarget;
+        target.classList.remove('bg-slate-800/80', 'text-slate-300', 'border', 'border-slate-700');
+        target.classList.add('bg-blue-600', 'text-white');
+        currentCategory = target.getAttribute('data-cat');
+        loadPhotos();
+      });
+    });
+
+    document.getElementById('search-input').addEventListener('input', (e) => {
+      searchQuery = e.target.value.toLowerCase().trim();
+      loadPhotos();
+    });
+
+    // LOAD & RENDER PHOTOS WITH FILTERING
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Loading photos...</p>';
@@ -413,14 +436,30 @@
         const querySnapshot = await getDocs(collection(db, "photos"));
         grid.innerHTML = '';
 
-        if (querySnapshot.empty) {
-          grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">No photos uploaded yet. Click + to add one!</p>';
+        let photosArray = [];
+        querySnapshot.forEach((docSnap) => {
+          photosArray.push({ id: docSnap.id, ...docSnap.data() });
+        });
+
+        // Filter by Category and Search Query
+        const filteredPhotos = photosArray.filter(photo => {
+          const matchesCategory = (currentCategory === 'all' || photo.picCategory === currentCategory);
+          const matchesSearch = (
+            (photo.picName && photo.picName.toLowerCase().includes(searchQuery)) ||
+            (photo.picCategory && photo.picCategory.toLowerCase().includes(searchQuery)) ||
+            (photo.uploaderName && photo.uploaderName.toLowerCase().includes(searchQuery)) ||
+            (photo.picDesc && photo.picDesc.toLowerCase().includes(searchQuery))
+          );
+          return matchesCategory && matchesSearch;
+        });
+
+        if (filteredPhotos.length === 0) {
+          grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">No photos found in this category or search!</p>';
           return;
         }
 
-        querySnapshot.forEach((documentSnapshot) => {
-          const photo = documentSnapshot.data();
-          const photoId = documentSnapshot.id;
+        filteredPhotos.forEach((photo) => {
+          const photoId = photo.id;
 
           const card = document.createElement('div');
           card.className = "bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col relative";
@@ -433,7 +472,7 @@
               <div>
                 <div class="flex items-start justify-between">
                   <h4 class="font-bold text-lg text-white truncate">${photo.picName}</h4>
-                  <button class="text-xs text-red-400 hover:text-red-300 delete-btn" data-id="${photoId}" data-email="${photo.uploaderEmail}" title="Delete Photo">
+                  <button class="text-xs text-red-400 hover:text-red-300 delete-btn" data-email="${photo.uploaderEmail}" title="Delete Photo">
                     <i class="fa-solid fa-trash"></i>
                   </button>
                 </div>
@@ -448,12 +487,12 @@
                 </div>
                 <div class="flex gap-1">
                   <input type="text" placeholder="Write comment..." class="flex-1 px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-white comment-input">
-                  <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded send-comment-btn" data-id="${photoId}">Post</button>
+                  <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded send-comment-btn">Post</button>
                 </div>
               </div>
 
               <div class="flex items-center justify-between pt-2 border-t border-slate-700/50 text-sm text-slate-300">
-                <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn" data-id="${photoId}">
+                <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn">
                   <i class="fa-solid fa-heart text-red-500"></i> <span>${photo.likes || 0}</span>
                 </button>
                 <button class="flex items-center gap-1.5 hover:text-blue-400 transition toggle-comment-btn">
@@ -483,13 +522,12 @@
           });
 
           // Toggle Comment Box
-          card.querySelector('.toggle-comment-btn').addEventListener('click', (e) => {
-            const commentSec = card.querySelector('.comment-section');
-            commentSec.classList.toggle('hidden');
+          card.querySelector('.toggle-comment-btn').addEventListener('click', () => {
+            card.querySelector('.comment-section').classList.toggle('hidden');
           });
 
           // Post Comment Action
-          card.querySelector('.send-comment-btn').addEventListener('click', async (e) => {
+          card.querySelector('.send-comment-btn').addEventListener('click', async () => {
             const input = card.querySelector('.comment-input');
             const text = input.value.trim();
             if (!text) return;
