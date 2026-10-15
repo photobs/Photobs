@@ -216,12 +216,14 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
-    // PWA INSTALL LOGIC
+    // PWA INSTALL LOGIC WITH DEVICE CHECK
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       deferredPrompt = e;
     });
+
+    const isMobileDevice = /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
     const triggerInstall = async () => {
       if (deferredPrompt) {
@@ -233,8 +235,21 @@
       }
     };
 
-    document.getElementById('install-mobile-btn').addEventListener('click', triggerInstall);
-    document.getElementById('install-pc-btn').addEventListener('click', triggerInstall);
+    document.getElementById('install-mobile-btn').addEventListener('click', async () => {
+      if (!isMobileDevice) {
+        alert("This is not a mobile device! Please try on a mobile phone.");
+        return;
+      }
+      await triggerInstall();
+    });
+
+    document.getElementById('install-pc-btn').addEventListener('click', async () => {
+      if (isMobileDevice) {
+        alert("This is not a PC! Please try on a computer/PC.");
+        return;
+      }
+      await triggerInstall();
+    });
 
     // FIREWORKS SYSTEM
     const canvas = document.getElementById('fireworks-canvas');
