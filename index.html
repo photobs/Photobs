@@ -14,6 +14,9 @@
   <script src="https://cdn.tailwindcss.com"></script>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
+  <!-- HEIC Image Conversion Library -->
+  <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.4/build/heic2any.min.js"></script>
+
   <style>
     /* Clean Dark Background */
     body {
@@ -366,7 +369,7 @@
     const lightboxImg = document.getElementById('lightbox-img');
     document.getElementById('close-lightbox').addEventListener('click', () => lightboxModal.classList.add('hidden'));
 
-    // UPLOAD LOGIC WITH AUTOMATIC COMPRESSION & DUAL CHUNKS
+    // UPLOAD LOGIC WITH AUTOMATIC HEIC CONVERSION, COMPRESSION & DUAL CHUNKS
     const uploadForm = document.getElementById('upload-form');
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -379,12 +382,21 @@
       const addBtn = document.getElementById('add-photo-btn');
 
       if (fileInput.files.length === 0) return alert('Please select a photo!');
-      const file = fileInput.files[0];
+      let file = fileInput.files[0];
 
       addBtn.textContent = 'Optimizing...';
       addBtn.disabled = true;
 
-      const compressImage = (file, maxWidth = 1024, quality = 0.7) => {
+      const compressImage = async (file, maxWidth = 1024, quality = 0.7) => {
+        if (file.name.toLowerCase().endsWith('.heic') || file.type === 'image/heic') {
+          try {
+            const blob = await heic2any({ blob: file, toType: 'image/jpeg' });
+            file = Array.isArray(blob) ? blob[0] : blob;
+          } catch (err) {
+            console.error("HEIC conversion error:", err);
+          }
+        }
+
         return new Promise((resolve) => {
           const reader = new FileReader();
           reader.readAsDataURL(file);
