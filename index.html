@@ -60,6 +60,42 @@
       animation: fadeIn 1.2s ease-out forwards;
     }
 
+    /* REALISTIC STAMP ANIMATION */
+    @keyframes stampDrop {
+      0% {
+        opacity: 0;
+        transform: scale(3) rotate(-15deg);
+      }
+      70% {
+        opacity: 0.9;
+        transform: scale(0.9) rotate(-15deg);
+      }
+      85% {
+        transform: scale(1.1) rotate(-15deg);
+      }
+      100% {
+        opacity: 0.85;
+        transform: scale(1) rotate(-15deg);
+      }
+    }
+
+    .official-stamp {
+      position: absolute;
+      bottom: 8px;
+      right: 8px;
+      width: 70px;
+      height: 70px;
+      pointer-events: none;
+      z-index: 20;
+      opacity: 0.85;
+      transform: rotate(-15deg);
+      filter: drop-shadow(0px 2px 4px rgba(0, 0, 0, 0.5));
+    }
+
+    .official-stamp.animate-stamp {
+      animation: stampDrop 0.6s ease-out forwards;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -219,6 +255,8 @@
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
 
+    let newlyUploadedId = null;
+
     // PWA INSTALL LOGIC WITH DEVICE CHECK
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
@@ -369,7 +407,7 @@
     const lightboxImg = document.getElementById('lightbox-img');
     document.getElementById('close-lightbox').addEventListener('click', () => lightboxModal.classList.add('hidden'));
 
-    // UPLOAD LOGIC WITH SAFE HEIC CONVERSION & TIMEOUT
+    // UPLOAD LOGIC WITH STAMP REGISTRATION
     const uploadForm = document.getElementById('upload-form');
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -447,7 +485,7 @@
 
         addBtn.textContent = 'Uploading...';
 
-        await addDoc(collection(db, "photos"), {
+        const docRef = await addDoc(collection(db, "photos"), {
           imagePart1,
           imagePart2,
           uploaderName,
@@ -460,7 +498,8 @@
           timestamp: new Date()
         });
 
-        alert('Photo uploaded successfully!');
+        newlyUploadedId = docRef.id;
+
         uploadForm.reset();
         uploadModal.classList.add('hidden');
         loadPhotos();
@@ -496,7 +535,7 @@
       loadPhotos();
     });
 
-    // LOAD & RENDER PHOTOS WITH CHUNK JOINING
+    // LOAD & RENDER PHOTOS WITH ANIMATED STAMP EFFECT
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Loading photos...</p>';
@@ -535,12 +574,17 @@
 
         filteredPhotos.forEach((photo) => {
           const photoId = photo.id;
+          const isJustUploaded = (photoId === newlyUploadedId);
+
           const card = document.createElement('div');
           card.className = "bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col relative";
           card.innerHTML = `
             <div class="relative group h-48 overflow-hidden bg-slate-950 cursor-pointer">
               <img src="${photo.imageUrl}" alt="${photo.picName}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 preview-trigger">
               <span class="absolute top-2 right-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md rounded-full text-blue-300">${photo.picCategory}</span>
+              
+              <!-- OFFICIAL STAMP IMAGE -->
+              <img src="7360.png" alt="Authorized Stamp" class="official-stamp ${isJustUploaded ? 'animate-stamp' : ''}">
             </div>
             <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
               <div>
@@ -635,6 +679,9 @@
 
           grid.appendChild(card);
         });
+
+        // Reset the newly uploaded ID state after rendering
+        newlyUploadedId = null;
 
       } catch (error) {
         console.error("Error loading photos: ", error);
