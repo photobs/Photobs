@@ -176,7 +176,7 @@
       </div>
 
       <!-- Action Buttons, Install & Google Login UI -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-2 flex-wrap">
         <!-- Google Login Section -->
         <button id="google-login-btn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
           <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
@@ -194,12 +194,13 @@
           <i id="theme-icon" class="fa-solid fa-sun text-yellow-400"></i>
         </button>
 
-        <button id="install-mobile-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-mobile-screen"></i> <span>Mobile</span>
+        <!-- Install Buttons -->
+        <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-mobile-screen"></i> <span>Install for Mobile</span>
         </button>
 
-        <button id="install-pc-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-laptop"></i> <span>PC</span>
+        <button id="install-pc-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-laptop"></i> <span>Install for PC</span>
         </button>
       </div>
     </div>
@@ -292,8 +293,7 @@
     <button id="close-lightbox" class="absolute top-5 right-5 text-white text-3xl hover:text-red-400 transition"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightbox-img" src="" alt="Fullscreen Preview" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain">
   </div>
-    <!-- FIREWORKS, AUTH & APP SCRIPT - PART A -->
-  <script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -394,7 +394,7 @@
       }
     }
 
-    // PWA INSTALL LOGIC WITH DEVICE CHECK
+    // PWA INSTALL LOGIC WITH EXACT DEVICE CHECK ALERTS
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -428,7 +428,8 @@
       }
       await triggerInstall();
     });
-              // FIREWORKS SYSTEM
+
+    // FIREWORKS SYSTEM
     const canvas = document.getElementById('fireworks-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -647,8 +648,7 @@
         addBtn.disabled = false;
       }
     });
-
-    // CATEGORY & SEARCH FILTER STATE
+          // CATEGORY & SEARCH FILTER STATE
     let currentCategory = 'all';
     let searchQuery = '';
 
@@ -831,4 +831,3 @@
   </script>
 </body>
 </html>
-
