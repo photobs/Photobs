@@ -175,28 +175,14 @@
         </div>
       </div>
 
-      <!-- Action Buttons, Install & Google Login UI -->
+      <!-- Install & Theme Toggle Actions -->
       <div class="flex items-center gap-2 flex-wrap">
-        <!-- Google Login Section -->
-        <button id="google-login-btn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
-          <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
+        <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-mobile-screen"></i> <span>Install for Mobile</span>
         </button>
-
-        <div id="user-profile-nav" class="hidden items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full">
-          <img id="nav-user-photo" src="" alt="User" class="w-7 h-7 rounded-full object-cover">
-          <span id="nav-user-name" class="text-xs font-bold text-white truncate max-w-[100px]"></span>
-          <button id="google-logout-btn" title="Logout" class="text-xs text-red-400 hover:text-red-300 ml-1">
-            <i class="fa-solid fa-right-from-bracket"></i>
-          </button>
-        </div>
 
         <button id="theme-toggle-btn" title="Toggle Theme" class="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
           <i id="theme-icon" class="fa-solid fa-sun text-yellow-400"></i>
-        </button>
-
-        <!-- Install Buttons -->
-        <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-mobile-screen"></i> <span>Install for Mobile</span>
         </button>
 
         <button id="install-pc-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
@@ -205,8 +191,23 @@
       </div>
     </div>
 
+    <!-- Google Login / User Profile Section (Red Button below) -->
+    <div class="max-w-7xl mx-auto flex items-center justify-end pt-2 border-t border-slate-800/60 mt-2">
+      <button id="google-login-btn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm transition">
+        <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
+      </button>
+
+      <div id="user-profile-nav" class="hidden items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full">
+        <img id="nav-user-photo" src="" alt="User" class="w-7 h-7 rounded-full object-cover">
+        <span id="nav-user-name" class="text-xs font-bold text-white truncate max-w-[120px]"></span>
+        <button id="google-logout-btn" title="Logout" class="text-xs text-red-400 hover:text-red-300 ml-1">
+          <i class="fa-solid fa-right-from-bracket"></i>
+        </button>
+      </div>
+    </div>
+
     <!-- Category Filters -->
-    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-2 text-xs font-medium">
+    <div class="max-w-7xl mx-auto flex items-center gap-2 overflow-x-auto py-2 mt-1 text-xs font-medium">
       <button class="category-btn active px-3 py-1.5 rounded-full bg-blue-600 text-white transition" data-cat="all">All</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="nature">Nature</button>
       <button class="category-btn px-3 py-1.5 rounded-full bg-slate-800/80 text-slate-300 border border-slate-700 transition" data-cat="sports">Sports</button>
@@ -235,9 +236,9 @@
       <h3 class="text-xl font-bold mb-4 text-white">Upload New Photo</h3>
       
       <!-- Login Reminder Banner for Guests -->
-      <div id="login-reminder-banner" class="mb-4 p-3 bg-blue-600/20 border border-blue-500/40 rounded-lg text-xs text-blue-300 flex items-center justify-between">
+      <div id="login-reminder-banner" class="mb-4 p-3 bg-red-600/20 border border-red-500/40 rounded-lg text-xs text-red-300 flex items-center justify-between">
         <span>💡 Sign in with Google for automatic name & email filling!</span>
-        <button type="button" id="modal-google-signin-btn" class="px-2 py-1 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Sign In</button>
+        <button type="button" id="modal-google-signin-btn" class="px-2 py-1 bg-red-600 text-white rounded font-bold hover:bg-red-700">Sign In</button>
       </div>
 
       <form id="upload-form" class="space-y-4 text-slate-200">
@@ -300,10 +301,10 @@
 
     // Firebase Configuration
     const firebaseConfig = {
-      apiKey: "AIzaSyBxbShbUK0fYHY9RemIFavIx...",
+      apiKey: "AIzaSyBxbShbUK0fYHY9RemIFavIx_SxQaLlUIA",
       authDomain: "photobs-ffead.firebaseapp.com",
       projectId: "photobs-ffead",
-      storageBucket: "photobs-ffead.appspot.com",
+      storageBucket: "photobs-ffead.firebasestorage.app",
       messagingSenderId: "1097325859601",
       appId: "1:1097325859601:web:c68130d361621c5952b2b0",
       measurementId: "G-PX18D6DJFE"
@@ -394,7 +395,7 @@
       }
     }
 
-    // PWA INSTALL LOGIC WITH EXACT DEVICE CHECK ALERTS
+    // PWA INSTALL LOGIC WITH DEVICE CHECK ALERTS
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
