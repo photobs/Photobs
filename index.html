@@ -143,7 +143,6 @@
   </style>
 </head>
 <body class="transition-colors duration-300 flex flex-col relative min-h-screen">
-
   <!-- SPLASH SCREEN -->
   <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
     <div class="text-center px-4 z-50">
@@ -176,18 +175,31 @@
         </div>
       </div>
 
-      <!-- Action Buttons & Install Buttons -->
+      <!-- Action Buttons, Install & Google Login UI -->
       <div class="flex items-center gap-2">
-        <button id="theme-toggle-btn" title="Toggle Theme" class="p-2.5 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
+        <!-- Google Login Section -->
+        <button id="google-login-btn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+          <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
+        </button>
+
+        <div id="user-profile-nav" class="hidden items-center gap-2 bg-slate-800 border border-slate-700 px-3 py-1 rounded-full">
+          <img id="nav-user-photo" src="" alt="User" class="w-7 h-7 rounded-full object-cover">
+          <span id="nav-user-name" class="text-xs font-bold text-white truncate max-w-[100px]"></span>
+          <button id="google-logout-btn" title="Logout" class="text-xs text-red-400 hover:text-red-300 ml-1">
+            <i class="fa-solid fa-right-from-bracket"></i>
+          </button>
+        </div>
+
+        <button id="theme-toggle-btn" title="Toggle Theme" class="p-2 rounded-full bg-slate-800 hover:bg-slate-700 text-slate-300 transition border border-slate-700">
           <i id="theme-icon" class="fa-solid fa-sun text-yellow-400"></i>
         </button>
 
-        <button id="install-mobile-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-mobile-screen"></i> <span>Install for Mobile</span>
+        <button id="install-mobile-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-mobile-screen"></i> <span>Mobile</span>
         </button>
 
-        <button id="install-pc-btn" class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
-          <i class="fa-solid fa-laptop"></i> <span>Install for PC</span>
+        <button id="install-pc-btn" class="hidden sm:flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white shadow-sm transition">
+          <i class="fa-solid fa-laptop"></i> <span>PC</span>
         </button>
       </div>
     </div>
@@ -221,20 +233,28 @@
     <div class="bg-slate-900 border border-slate-700 bg-card w-full max-w-lg rounded-2xl p-6 shadow-2xl relative max-h-[90vh] overflow-y-auto">
       <h3 class="text-xl font-bold mb-4 text-white">Upload New Photo</h3>
       
+      <!-- Login Reminder Banner for Guests -->
+      <div id="login-reminder-banner" class="mb-4 p-3 bg-blue-600/20 border border-blue-500/40 rounded-lg text-xs text-blue-300 flex items-center justify-between">
+        <span>💡 Sign in with Google for automatic name & email filling!</span>
+        <button type="button" id="modal-google-signin-btn" class="px-2 py-1 bg-blue-600 text-white rounded font-bold hover:bg-blue-700">Sign In</button>
+      </div>
+
       <form id="upload-form" class="space-y-4 text-slate-200">
         <div>
           <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Choose Photo</label>
           <input type="file" id="file-input" accept="image/*" required class="w-full text-sm border rounded-lg p-2 bg-slate-800 border-slate-700 text-slate-300">
         </div>
 
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Name</label>
-          <input type="text" id="uploader-name" placeholder="Souptik Panda" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
-        </div>
+        <div id="uploader-fields-container">
+          <div class="mb-3">
+            <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Name</label>
+            <input type="text" id="uploader-name" placeholder="Souptik Panda" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+          </div>
 
-        <div>
-          <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Gmail (For Delete Permission)</label>
-          <input type="email" id="uploader-email" placeholder="example@gmail.com" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+          <div>
+            <label class="block text-xs font-semibold uppercase tracking-wider mb-1">Uploader Gmail (For Delete Permission)</label>
+            <input type="email" id="uploader-email" placeholder="example@gmail.com" required class="w-full px-3 py-2 text-sm border rounded-lg bg-slate-800 border-slate-700 text-white">
+          </div>
         </div>
 
         <div>
@@ -272,11 +292,11 @@
     <button id="close-lightbox" class="absolute top-5 right-5 text-white text-3xl hover:text-red-400 transition"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightbox-img" src="" alt="Fullscreen Preview" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain">
   </div>
-  
-    <!-- FIREWORKS & APP SCRIPT -->
+    <!-- FIREWORKS, AUTH & APP SCRIPT - PART A -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Firebase Configuration
     const firebaseConfig = {
@@ -291,6 +311,62 @@
 
     const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+
+    let currentUser = null;
+
+    // GOOGLE LOGIN / LOGOUT HANDLERS
+    const handleGoogleLogin = async () => {
+      try {
+        await signInWithPopup(auth, provider);
+      } catch (error) {
+        console.error("Login Error:", error);
+        alert("Login failed: " + error.message);
+      }
+    };
+
+    document.getElementById('google-login-btn').addEventListener('click', handleGoogleLogin);
+    document.getElementById('modal-google-signin-btn').addEventListener('click', handleGoogleLogin);
+    
+    document.getElementById('google-logout-btn').addEventListener('click', async () => {
+      await signOut(auth);
+    });
+
+    // AUTH STATE LISTENER
+    onAuthStateChanged(auth, (user) => {
+      currentUser = user;
+      const loginBtn = document.getElementById('google-login-btn');
+      const userNav = document.getElementById('user-profile-nav');
+      const navPhoto = document.getElementById('nav-user-photo');
+      const navName = document.getElementById('nav-user-name');
+      const reminderBanner = document.getElementById('login-reminder-banner');
+      const uploaderFields = document.getElementById('uploader-fields-container');
+      const nameInput = document.getElementById('uploader-name');
+      const emailInput = document.getElementById('uploader-email');
+
+      if (user) {
+        loginBtn.classList.add('hidden');
+        userNav.classList.remove('hidden');
+        userNav.classList.add('flex');
+        navPhoto.src = user.photoURL || 'image.png';
+        navName.textContent = user.displayName || 'User';
+
+        if (reminderBanner) reminderBanner.classList.add('hidden');
+        if (uploaderFields) uploaderFields.classList.add('hidden');
+        if (nameInput) nameInput.value = user.displayName || '';
+        if (emailInput) emailInput.value = user.email || '';
+      } else {
+        loginBtn.classList.remove('hidden');
+        userNav.classList.add('hidden');
+        userNav.classList.remove('flex');
+
+        if (reminderBanner) reminderBanner.classList.remove('hidden');
+        if (uploaderFields) uploaderFields.classList.remove('hidden');
+        if (nameInput) nameInput.value = '';
+        if (emailInput) emailInput.value = '';
+      }
+    });
 
     let newlyUploadedId = null;
 
@@ -352,8 +428,7 @@
       }
       await triggerInstall();
     });
-
-    // FIREWORKS SYSTEM
+              // FIREWORKS SYSTEM
     const canvas = document.getElementById('fireworks-canvas');
     const ctx = canvas.getContext('2d');
     canvas.width = window.innerWidth;
@@ -473,8 +548,8 @@
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const fileInput = document.getElementById('file-input');
-      const uploaderName = document.getElementById('uploader-name').value;
-      const uploaderEmail = document.getElementById('uploader-email').value;
+      const uploaderName = currentUser ? currentUser.displayName : document.getElementById('uploader-name').value;
+      const uploaderEmail = currentUser ? currentUser.email : document.getElementById('uploader-email').value;
       const picName = document.getElementById('pic-name').value;
       const picCategory = document.getElementById('pic-category').value;
       const picDesc = document.getElementById('pic-desc').value;
@@ -706,7 +781,7 @@
             const input = card.querySelector('.comment-input');
             const text = input.value.trim();
             if (!text) return;
-            const userName = prompt("Enter your name for comment:") || "Guest";
+            const userName = currentUser ? currentUser.displayName : (prompt("Enter your name for comment:") || "Guest");
             const docRef = doc(db, "photos", photoId);
             await updateDoc(docRef, {
               comments: arrayUnion({ user: userName, text: text })
@@ -716,7 +791,7 @@
 
           card.querySelector('.delete-btn').addEventListener('click', async (e) => {
             const uploaderEmail = e.currentTarget.getAttribute('data-email');
-            const enteredEmail = prompt("Enter the uploader's Gmail to delete this photo:");
+            const enteredEmail = currentUser ? currentUser.email : prompt("Enter the uploader's Gmail to delete this photo:");
             if (enteredEmail === uploaderEmail) {
               if (confirm("Are you sure you want to delete this photo?")) {
                 await deleteDoc(doc(db, "photos", photoId));
@@ -756,3 +831,4 @@
   </script>
 </body>
 </html>
+
