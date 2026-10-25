@@ -132,6 +132,16 @@
       animation: stampZoomDrop 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
     }
 
+    /* UPLOAD SUCCESS BIG TEXT POPUP ANIMATION */
+    @keyframes popUpText {
+      0% { transform: scale(0.5); opacity: 0; }
+      60% { transform: scale(1.05); opacity: 1; }
+      100% { transform: scale(1); opacity: 1; }
+    }
+    .animate-popup-text {
+      animation: popUpText 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+    }
+
     /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 6px;
@@ -143,8 +153,65 @@
   </style>
 </head>
 <body class="transition-colors duration-300 flex flex-col relative min-h-screen">
+  
+  <!-- TUNE SELECTION MODAL (ON ENTRY) -->
+  <div id="tune-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden px-4">
+    <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-white">
+      <h3 class="text-xl font-bold mb-2 text-center text-blue-400">Select a Tune</h3>
+      <p class="text-xs text-slate-400 text-center mb-4">Choose your preferred background tune for uploads. If skipped, Tune 1 will be set automatically.</p>
+      
+      <div class="space-y-3 mb-5">
+        <!-- Tune 1 -->
+        <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="tune-choice" value="tune1.mp3" id="tune1-radio" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+            <label for="tune1-radio" class="text-sm font-semibold cursor-pointer">Tune 1</label>
+          </div>
+          <button type="button" onclick="playTunePreview('tune1.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+            <i class="fa-solid fa-play"></i> Play
+          </button>
+        </div>
+
+        <!-- Tune 2 -->
+        <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="tune-choice" value="tune2.mp3" id="tune2-radio" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+            <label for="tune2-radio" class="text-sm font-semibold cursor-pointer">Tune 2</label>
+          </div>
+          <button type="button" onclick="playTunePreview('tune2.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+            <i class="fa-solid fa-play"></i> Play
+          </button>
+        </div>
+
+        <!-- Tune 3 -->
+        <div class="flex items-center justify-between p-3 bg-slate-800 rounded-xl border border-slate-700">
+          <div class="flex items-center gap-3">
+            <input type="radio" name="tune-choice" value="tune3.mp3" id="tune3-radio" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
+            <label for="tune3-radio" class="text-sm font-semibold cursor-pointer">Tune 3</label>
+          </div>
+          <button type="button" onclick="playTunePreview('tune3.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+            <i class="fa-solid fa-play"></i> Play
+          </button>
+        </div>
+      </div>
+
+      <div class="flex items-center justify-end gap-3">
+        <button type="button" id="cancel-tune-btn" class="px-4 py-2 text-sm font-medium rounded-lg border border-slate-700 hover:bg-slate-800 text-slate-300">Cancel</button>
+        <button type="button" id="save-tune-btn" class="px-5 py-2 text-sm font-medium rounded-lg bg-blue-600 hover:bg-blue-700 text-white">Save Tune</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- UPLOAD SUCCESS BANNER OVERLAY -->
+  <div id="upload-success-overlay" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden px-4 pointer-events-none">
+    <div id="upload-success-box" class="bg-slate-900 border border-blue-500/50 p-8 rounded-3xl shadow-2xl text-center transform scale-50 opacity-0 transition">
+      <i class="fa-solid fa-circle-check text-emerald-400 text-6xl mb-4"></i>
+      <h2 id="success-msg-title" class="text-2xl md:text-4xl font-extrabold text-white tracking-wide"></h2>
+    </div>
+  </div>
+
   <!-- SPLASH SCREEN -->
-  <div id="splash-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
+  <div id="splash-screen" class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
     <div class="text-center px-4 z-50">
       <h1 id="typewriter-text" class="text-3xl md:text-5xl font-extrabold tracking-wider text-blue-400 mb-3 typing"></h1>
       <p id="author-text" class="text-lg md:text-xl text-slate-300 opacity-0 font-medium mt-2">
@@ -154,10 +221,10 @@
   </div>
 
   <!-- FIREWORKS CANVAS -->
-  <canvas id="fireworks-canvas" class="fixed inset-0 pointer-events-none z-40"></canvas>
+  <canvas id="fireworks-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
 
   <!-- NAVBAR / HEADER -->
-  <header class="sticky top-0 z-30 bg-slate-900/85 backdrop-blur-md border-b border-slate-800 px-4 py-3">
+  <header class="sticky top-0 z-20 bg-slate-900/85 backdrop-blur-md border-b border-slate-800 px-4 py-3">
     <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
       
       <!-- Logo & Title -->
@@ -191,7 +258,7 @@
       </div>
     </div>
 
-    <!-- Google Login / User Profile Section (Red Button below) -->
+    <!-- Google Login / User Profile Section -->
     <div class="max-w-7xl mx-auto flex items-center justify-end pt-2 border-t border-slate-800/60 mt-2">
       <button id="google-login-btn" class="flex items-center gap-2 px-3 py-1.5 text-xs font-semibold rounded-lg bg-red-600 hover:bg-red-700 text-white shadow-sm transition">
         <i class="fa-brands fa-google"></i> <span>Sign in with Google</span>
@@ -226,7 +293,7 @@
   </main>
 
   <!-- FLOATING "+" BUTTON FOR UPLOAD -->
-  <button id="open-upload-modal-btn" class="fixed bottom-6 right-6 z-30 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
+  <button id="open-upload-modal-btn" class="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
     <i class="fa-solid fa-plus"></i>
   </button>
 
@@ -294,7 +361,7 @@
     <button id="close-lightbox" class="absolute top-5 right-5 text-white text-3xl hover:text-red-400 transition"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightbox-img" src="" alt="Fullscreen Preview" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain">
   </div>
-    <script type="module">
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -316,6 +383,39 @@
     const provider = new GoogleAuthProvider();
 
     let currentUser = null;
+    let activePreviewAudio = null;
+
+    // TUNE SELECTION LOGIC
+    window.playTunePreview = (tuneFile) => {
+      if (activePreviewAudio) {
+        activePreviewAudio.pause();
+        activePreviewAudio.currentTime = 0;
+      }
+      activePreviewAudio = new Audio(tuneFile);
+      activePreviewAudio.play().catch(e => console.log("Audio play blocked:", e));
+    };
+
+    function checkAndShowTuneModal() {
+      const savedTune = localStorage.getItem('photobs_selected_tune');
+      const tuneModal = document.getElementById('tune-modal');
+      if (!savedTune) {
+        tuneModal.classList.remove('hidden');
+      }
+    }
+
+    document.getElementById('save-tune-btn').addEventListener('click', () => {
+      const selected = document.querySelector('input[name="tune-choice"]:checked');
+      const tuneToSave = selected ? selected.value : 'tune1.mp3';
+      localStorage.setItem('photobs_selected_tune', tuneToSave);
+      if (activePreviewAudio) { activePreviewAudio.pause(); }
+      document.getElementById('tune-modal').classList.add('hidden');
+    });
+
+    document.getElementById('cancel-tune-btn').addEventListener('click', () => {
+      localStorage.setItem('photobs_selected_tune', 'tune1.mp3');
+      if (activePreviewAudio) { activePreviewAudio.pause(); }
+      document.getElementById('tune-modal').classList.add('hidden');
+    });
 
     // GOOGLE LOGIN / LOGOUT HANDLERS
     const handleGoogleLogin = async () => {
@@ -371,8 +471,8 @@
 
     let newlyUploadedId = null;
 
-    // DIGITAL STAMP SOUND EFFECT USING WEB AUDIO API
-    function playStampSound() {
+    // DIGITAL STAMP SOUND EFFECT
+    window.playStampSound = function() {
       try {
         const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         const osc = audioCtx.createOscillator();
@@ -393,9 +493,9 @@
       } catch (e) {
         console.log("Audio not supported or blocked");
       }
-    }
+    };
 
-    // PWA INSTALL LOGIC WITH DEVICE CHECK ALERTS
+    // PWA INSTALL LOGIC
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -517,6 +617,7 @@
             setTimeout(() => {
               splash.style.display = "none";
               stopFireworks();
+              checkAndShowTuneModal();
             }, 800);
           }, 1800);
         }
@@ -545,7 +646,7 @@
     const lightboxImg = document.getElementById('lightbox-img');
     document.getElementById('close-lightbox').addEventListener('click', () => lightboxModal.classList.add('hidden'));
 
-    // UPLOAD LOGIC
+    // UPLOAD LOGIC & SUCCESS ANIMATION WITH TUNE PLAYBACK
     const uploadForm = document.getElementById('upload-form');
     uploadForm.addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -640,6 +741,26 @@
 
         uploadForm.reset();
         uploadModal.classList.add('hidden');
+
+        // TRIGGER UPLOAD SUCCESS BANNER & PLAY TUNE
+        const successOverlay = document.getElementById('upload-success-overlay');
+        const successBox = document.getElementById('upload-success-box');
+        const successTitle = document.getElementById('success-msg-title');
+
+        successTitle.textContent = `Thank you ${uploaderName} for uploading photo!`;
+        successOverlay.classList.remove('hidden');
+        successBox.classList.add('animate-popup-text');
+
+        // Play Selected Tune
+        const chosenTune = localStorage.getItem('photobs_selected_tune') || 'tune1.mp3';
+        const uploadTuneAudio = new Audio(chosenTune);
+        uploadTuneAudio.play().catch(err => console.log("Tune playback error:", err));
+
+        setTimeout(() => {
+          successOverlay.classList.add('hidden');
+          successBox.classList.remove('animate-popup-text');
+        }, 4000);
+
         loadPhotos();
       } catch (error) {
         console.error("Upload error: ", error);
@@ -649,7 +770,8 @@
         addBtn.disabled = false;
       }
     });
-          // CATEGORY & SEARCH FILTER STATE
+
+    // CATEGORY & SEARCH FILTER STATE
     let currentCategory = 'all';
     let searchQuery = '';
 
@@ -672,7 +794,7 @@
       loadPhotos();
     });
 
-    // LOAD & RENDER PHOTOS WITH CARD FLASH AND STAMP SOUND ANIMATION
+    // LOAD & RENDER PHOTOS
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Loading photos...</p>';
@@ -736,7 +858,7 @@
               </div>
 
               <!-- Comments Section Box -->
-              <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
+       <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
                 <div class="max-h-24 overflow-y-auto space-y-1 text-xs text-slate-300 comment-list">
                   ${(photo.comments || []).map(c => `<p class="bg-slate-800/80 p-1 rounded"><strong>${c.user}:</strong>${c.text}</p>`).join('') || '<p class="text-slate-500">No comments yet.</p>'}
                 </div>
