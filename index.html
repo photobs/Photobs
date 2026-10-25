@@ -167,7 +167,7 @@
             <input type="radio" name="tune-choice" value="tune1.mp3" id="tune1-radio" checked class="w-4 h-4 text-blue-600 focus:ring-blue-500">
             <label for="tune1-radio" class="text-sm font-semibold cursor-pointer">Tune 1</label>
           </div>
-          <button type="button" onclick="playTunePreview('tune1.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+          <button type="button" onclick="playTunePreview('tune1.mp3', this)" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
             <i class="fa-solid fa-play"></i> Play
           </button>
         </div>
@@ -178,7 +178,7 @@
             <input type="radio" name="tune-choice" value="tune2.mp3" id="tune2-radio" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
             <label for="tune2-radio" class="text-sm font-semibold cursor-pointer">Tune 2</label>
           </div>
-          <button type="button" onclick="playTunePreview('tune2.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+          <button type="button" onclick="playTunePreview('tune2.mp3', this)" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
             <i class="fa-solid fa-play"></i> Play
           </button>
         </div>
@@ -189,7 +189,7 @@
             <input type="radio" name="tune-choice" value="tune3.mp3" id="tune3-radio" class="w-4 h-4 text-blue-600 focus:ring-blue-500">
             <label for="tune3-radio" class="text-sm font-semibold cursor-pointer">Tune 3</label>
           </div>
-          <button type="button" onclick="playTunePreview('tune3.mp3')" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
+          <button type="button" onclick="playTunePreview('tune3.mp3', this)" class="px-3 py-1 text-xs bg-blue-600 hover:bg-blue-700 rounded-lg text-white flex items-center gap-1">
             <i class="fa-solid fa-play"></i> Play
           </button>
         </div>
@@ -361,7 +361,7 @@
     <button id="close-lightbox" class="absolute top-5 right-5 text-white text-3xl hover:text-red-400 transition"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightbox-img" src="" alt="Fullscreen Preview" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain">
   </div>
-  <script type="module">
+    <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -384,15 +384,38 @@
 
     let currentUser = null;
     let activePreviewAudio = null;
+    let activePlayButton = null;
 
-    // TUNE SELECTION LOGIC
-    window.playTunePreview = (tuneFile) => {
+    // TUNE PREVIEW & PAUSE/PLAY TOGGLE LOGIC
+    window.playTunePreview = (tuneFile, btnElement) => {
+      if (activePreviewAudio && activePreviewAudio.src.includes(tuneFile)) {
+        if (activePreviewAudio.paused) {
+          activePreviewAudio.play();
+          btnElement.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+        } else {
+          activePreviewAudio.pause();
+          btnElement.innerHTML = '<i class="fa-solid fa-play"></i> Play';
+        }
+        return;
+      }
+
       if (activePreviewAudio) {
         activePreviewAudio.pause();
-        activePreviewAudio.currentTime = 0;
+        if (activePlayButton) {
+          activePlayButton.innerHTML = '<i class="fa-solid fa-play"></i> Play';
+        }
       }
+
       activePreviewAudio = new Audio(tuneFile);
-      activePreviewAudio.play().catch(e => console.log("Audio play blocked:", e));
+      activePlayButton = btnElement;
+
+      activePreviewAudio.play().then(() => {
+        btnElement.innerHTML = '<i class="fa-solid fa-pause"></i> Pause';
+      }).catch(e => console.log("Audio play blocked:", e));
+
+      activePreviewAudio.onended = () => {
+        btnElement.innerHTML = '<i class="fa-solid fa-play"></i> Play';
+      };
     };
 
     function checkAndShowTuneModal() {
@@ -494,8 +517,7 @@
         console.log("Audio not supported or blocked");
       }
     };
-
-    // PWA INSTALL LOGIC
+          // PWA INSTALL LOGIC
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -858,7 +880,7 @@
               </div>
 
               <!-- Comments Section Box -->
-       <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
+              <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
                 <div class="max-h-24 overflow-y-auto space-y-1 text-xs text-slate-300 comment-list">
                   ${(photo.comments || []).map(c => `<p class="bg-slate-800/80 p-1 rounded"><strong>${c.user}:</strong>${c.text}</p>`).join('') || '<p class="text-slate-500">No comments yet.</p>'}
                 </div>
