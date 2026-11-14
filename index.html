@@ -154,7 +154,7 @@
 </head>
 <body class="transition-colors duration-300 flex flex-col relative min-h-screen">
   
-  <!-- TUNE SELECTION MODAL (ON ENTRY) -->
+  <!-- TUNE SELECTION MODAL (ON ENTRY / SETTINGS) -->
   <div id="tune-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-md hidden px-4">
     <div class="bg-slate-900 border border-slate-700 w-full max-w-md rounded-2xl p-6 shadow-2xl text-white">
       <h3 class="text-xl font-bold mb-2 text-center text-blue-400">Select a Tune</h3>
@@ -292,10 +292,17 @@
     </div>
   </main>
 
-  <!-- FLOATING "+" BUTTON FOR UPLOAD -->
-  <button id="open-upload-modal-btn" class="fixed bottom-6 right-6 z-20 w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
-    <i class="fa-solid fa-plus"></i>
-  </button>
+  <!-- FLOATING HEADPHONE TUNE CHANGE & UPLOAD BUTTONS -->
+  <div class="fixed bottom-6 right-6 z-20 flex flex-col items-center gap-2">
+    <!-- Change Tune Button with Headphone Icon (Above Plus Button) -->
+    <button id="open-tune-modal-btn" title="Change Background Tune" class="w-11 h-11 rounded-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-slate-700 shadow-lg flex items-center justify-center text-base transition-transform hover:scale-105 active:scale-95">
+      <i class="fa-solid fa-headphones"></i>
+    </button>
+    <!-- Floating "+" Button for Upload -->
+    <button id="open-upload-modal-btn" title="Upload Photo" class="w-14 h-14 rounded-full bg-blue-600 hover:bg-blue-700 text-white shadow-xl flex items-center justify-center text-2xl transition-transform hover:scale-105 active:scale-95">
+      <i class="fa-solid fa-plus"></i>
+    </button>
+  </div>
 
   <!-- UPLOAD MODAL -->
   <div id="upload-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm hidden px-4">
@@ -426,6 +433,14 @@
       }
     }
 
+    // Open Tune Modal via Headphone Floating Button
+    document.getElementById('open-tune-modal-btn').addEventListener('click', () => {
+      const currentSavedTune = localStorage.getItem('photobs_selected_tune') || 'tune1.mp3';
+      const radioToCheck = document.querySelector(`input[name="tune-choice"][value="${currentSavedTune}"]`);
+      if (radioToCheck) radioToCheck.checked = true;
+      document.getElementById('tune-modal').classList.remove('hidden');
+    });
+
     document.getElementById('save-tune-btn').addEventListener('click', () => {
       const selected = document.querySelector('input[name="tune-choice"]:checked');
       const tuneToSave = selected ? selected.value : 'tune1.mp3';
@@ -435,7 +450,9 @@
     });
 
     document.getElementById('cancel-tune-btn').addEventListener('click', () => {
-      localStorage.setItem('photobs_selected_tune', 'tune1.mp3');
+      if (!localStorage.getItem('photobs_selected_tune')) {
+        localStorage.setItem('photobs_selected_tune', 'tune1.mp3');
+      }
       if (activePreviewAudio) { activePreviewAudio.pause(); }
       document.getElementById('tune-modal').classList.add('hidden');
     });
@@ -816,10 +833,10 @@
       loadPhotos();
     });
 
-    // LOAD & RENDER PHOTOS
+    // LOAD & RENDER PHOTOS (STABLE LOADING HANDLING)
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
-      grid.innerHTML = '<p class="col-span-full text-center text-slate-400">Loading photos...</p>';
+      grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">Loading photos...</p>';
 
       try {
         const querySnapshot = await getDocs(collection(db, "photos"));
