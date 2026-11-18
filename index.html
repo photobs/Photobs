@@ -68,6 +68,25 @@
       backdrop-filter: blur(10px);
     }
 
+    /* Typewriter Cursor */
+    .typing::after {
+      content: '|';
+      animation: blink 0.7s infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0; }
+    }
+
+    /* Transparent Author Fade-In */
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 0.5; transform: translateY(0); }
+    }
+    .fade-in-author {
+      animation: fadeIn 1.2s ease-out forwards;
+    }
+
     /* CARD FLASH / HIGHLIGHT EFFECT */
     @keyframes cardFlash {
       0% { transform: scale(1.03); filter: brightness(1.4); box-shadow: 0 0 25px rgba(59, 130, 246, 0.8); }
@@ -121,28 +140,6 @@
     }
     .animate-popup-text {
       animation: popUpText 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
-    }
-
-    /* Splash Screen Fade-In Animation & Background Styling */
-    @keyframes splashFadeIn {
-      from { opacity: 0; transform: scale(1.02); }
-      to { opacity: 1; transform: scale(1); }
-    }
-    #splash-screen {
-      background-size: cover;
-      background-position: center;
-      background-repeat: no-repeat;
-      animation: splashFadeIn 1s ease-out forwards;
-    }
-    @media (max-width: 768px) {
-      #splash-screen {
-        background-image: url('mobile.png');
-      }
-    }
-    @media (min-width: 769px) {
-      #splash-screen {
-        background-image: url('pc.png');
-      }
     }
 
     /* Custom Scrollbar */
@@ -213,8 +210,15 @@
     </div>
   </div>
 
-  <!-- SPLASH SCREEN WITH FADE-IN IMAGE -->
-  <div id="splash-screen" class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 transition-opacity duration-800"></div>
+  <!-- SPLASH SCREEN -->
+  <div id="splash-screen" class="fixed inset-0 z-40 flex flex-col items-center justify-center bg-slate-950 text-white transition-opacity duration-800">
+    <div class="text-center px-4 z-50">
+      <h1 id="typewriter-text" class="text-3xl md:text-5xl font-extrabold tracking-wider text-blue-400 mb-3 typing"></h1>
+      <p id="author-text" class="text-lg md:text-xl text-slate-300 opacity-0 font-medium mt-2">
+        Created by Souptik Panda
+      </p>
+    </div>
+  </div>
 
   <!-- FIREWORKS CANVAS -->
   <canvas id="fireworks-canvas" class="fixed inset-0 pointer-events-none z-30"></canvas>
@@ -652,49 +656,45 @@
       canvas.style.display = 'none';
     }
 
-    // SPLASH SCREEN DUAL AUDIO FLOW (animation.mp3 -> ele.mp3)
-    function startSplashSequence() {
+    // TYPEWRITER & SPLASH SCREEN ANIMATION
+    const textToType = "Welcome to Photobs";
+    let typeIndex = 0;
+    const typewriterEl = document.getElementById('typewriter-text');
+    const authorEl = document.getElementById('author-text');
+
+    function startTypewriter() {
       startFireworks();
-
-      const audio1 = new Audio('animation.mp3');
-      const audio2 = new Audio('ele.mp3');
-
-      audio1.play().catch(e => console.log("Audio 1 autoplay blocked:", e));
-
-      audio1.onended = () => {
-        audio2.play().catch(e => console.log("Audio 2 autoplay blocked:", e));
-      };
-
-      // Total splash duration before fading to home
-      setTimeout(() => {
-        const splash = document.getElementById('splash-screen');
-        splash.style.opacity = "0";
-        setTimeout(() => {
-          splash.style.display = "none";
-          stopFireworks();
-          checkAndShowTuneModal();
-        }, 800);
-      }, 4000);
+      function typeChar() {
+        if (typeIndex < textToType.length) {
+          typewriterEl.textContent += textToType.charAt(typeIndex);
+          typeIndex++;
+          setTimeout(typeChar, 100);
+        } else {
+          typewriterEl.classList.remove('typing');
+          authorEl.classList.add('fade-in-author');
+          setTimeout(() => {
+            const splash = document.getElementById('splash-screen');
+            splash.style.opacity = "0";
+            setTimeout(() => {
+              splash.style.display = "none";
+              stopFireworks();
+              checkAndShowTuneModal();
+            }, 800);
+          }, 1800);
+        }
+      }
+      typeChar();
     }
 
-    // THEME TOGGLE (WITH PERSISTENT MEMORY)
+    // THEME TOGGLE
     const themeBtn = document.getElementById('theme-toggle-btn');
     const themeIcon = document.getElementById('theme-icon');
-
-    const savedTheme = localStorage.getItem('photobs_theme');
-    if (savedTheme === 'light') {
-      document.body.classList.add('light-mode');
-      themeIcon.className = "fa-solid fa-moon text-indigo-600";
-    }
-
     themeBtn.addEventListener('click', () => {
       document.body.classList.toggle('light-mode');
       if (document.body.classList.contains('light-mode')) {
         themeIcon.className = "fa-solid fa-moon text-indigo-600";
-        localStorage.setItem('photobs_theme', 'light');
       } else {
         themeIcon.className = "fa-solid fa-sun text-yellow-400";
-        localStorage.setItem('photobs_theme', 'dark');
       }
     });
 
@@ -794,7 +794,6 @@
           picCategory,
           picDesc,
           likes: 0,
-          downloads: 0,
           comments: [],
           timestamp: new Date()
         });
@@ -856,7 +855,7 @@
       loadPhotos();
     });
 
-    // LOAD & RENDER PHOTOS (WITH TIME AGO & DOWNLOAD COUNTER)
+    // LOAD & RENDER PHOTOS (WITH TIME AGO DISPLAY)
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">Loading photos...</p>';
@@ -937,16 +936,16 @@
               </div>
 
               <div class="flex items-center justify-between pt-2 border-t border-slate-700/50 text-sm text-slate-300">
-                <button class="flex items-center gap-1 hover:text-red-500 transition like-btn" title="Like">
+                <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn">
                   <i class="fa-solid fa-heart text-red-500"></i> <span>${photo.likes || 0}</span>
                 </button>
-                <button class="flex items-center gap-1 hover:text-blue-400 transition toggle-comment-btn" title="Comments">
+                <button class="flex items-center gap-1.5 hover:text-blue-400 transition toggle-comment-btn">
                   <i class="fa-regular fa-comment"></i> <span>${photo.comments ? photo.comments.length : 0}</span>
                 </button>
-                <a href="${photo.imageUrl}" download="${photo.picName || 'photo'}.jpg" class="flex items-center gap-1 hover:text-emerald-400 transition download-btn" data-id="${photoId}" title="Download Photo">
-                  <i class="fa-solid fa-download"></i> <span>${photo.downloads || 0}</span>
+                <a href="${photo.imageUrl}" download="${photo.picName || 'photo'}.jpg" class="flex items-center gap-1.5 hover:text-emerald-400 transition" title="Download Photo">
+                  <i class="fa-solid fa-download"></i>
                 </a>
-                <button class="flex items-center gap-1 hover:text-indigo-400 transition share-btn" data-name="${photo.picName}" title="Share">
+                <button class="flex items-center gap-1.5 hover:text-indigo-400 transition share-btn" data-name="${photo.picName}">
                   <i class="fa-solid fa-share-nodes"></i>
                 </button>
               </div>
@@ -962,11 +961,6 @@
             const docRef = doc(db, "photos", photoId);
             await updateDoc(docRef, { likes: increment(1) });
             loadPhotos();
-          });
-
-          card.querySelector('.download-btn').addEventListener('click', async (e) => {
-            const docRef = doc(db, "photos", photoId);
-            await updateDoc(docRef, { downloads: increment(1) });
           });
 
           card.querySelector('.toggle-comment-btn').addEventListener('click', () => {
@@ -1021,7 +1015,7 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      startSplashSequence();
+      startTypewriter();
       loadPhotos();
     });
   </script>
