@@ -368,7 +368,8 @@
     <button id="close-lightbox" class="absolute top-5 right-5 text-white text-3xl hover:text-red-400 transition"><i class="fa-solid fa-xmark"></i></button>
     <img id="lightbox-img" src="" alt="Fullscreen Preview" class="max-w-full max-h-[85vh] rounded-xl shadow-2xl object-contain">
   </div>
-    <script type="module">
+
+  <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
     import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -392,6 +393,26 @@
     let currentUser = null;
     let activePreviewAudio = null;
     let activePlayButton = null;
+
+    // TIME AGO HELPER FUNCTION
+    function timeAgo(timestamp) {
+      if (!timestamp) return 'Just now';
+      const now = new Date();
+      const uploadDate = timestamp.toDate ? timestamp.toDate() : new Date(timestamp);
+      const seconds = Math.floor((now - uploadDate) / 1000);
+
+      let interval = seconds / 31536000;
+      if (interval > 1) return Math.floor(interval) + ' years ago';
+      interval = seconds / 2592000;
+      if (interval > 1) return Math.floor(interval) + ' months ago';
+      interval = seconds / 86400;
+      if (interval > 1) return Math.floor(interval) + ' days ago';
+      interval = seconds / 3600;
+      if (interval > 1) return Math.floor(interval) + ' hours ago';
+      interval = seconds / 60;
+      if (interval > 1) return Math.floor(interval) + ' minutes ago';
+      return 'Just now';
+    }
 
     // TUNE PREVIEW & PAUSE/PLAY TOGGLE LOGIC
     window.playTunePreview = (tuneFile, btnElement) => {
@@ -534,7 +555,8 @@
         console.log("Audio not supported or blocked");
       }
     };
-          // PWA INSTALL LOGIC
+
+    // PWA INSTALL LOGIC
     let deferredPrompt;
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
@@ -833,7 +855,7 @@
       loadPhotos();
     });
 
-    // LOAD & RENDER PHOTOS (STABLE LOADING HANDLING)
+    // LOAD & RENDER PHOTOS (WITH TIME AGO DISPLAY)
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">Loading photos...</p>';
@@ -873,6 +895,7 @@
         filteredPhotos.forEach((photo) => {
           const photoId = photo.id;
           const isJustUploaded = (photoId === newlyUploadedId);
+          const formattedTime = timeAgo(photo.timestamp);
 
           const card = document.createElement('div');
           card.className = `bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col relative ${isJustUploaded ? 'animate-card-flash' : ''}`;
@@ -881,6 +904,11 @@
               <img src="${photo.imageUrl}" alt="${photo.picName}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 preview-trigger">
               <span class="absolute top-2 right-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md rounded-full text-blue-300">${photo.picCategory}</span>
               
+              <!-- Transparent Time Ago Badge (Top Left of Image) -->
+              <span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-medium bg-black/40 backdrop-blur-md rounded-full text-slate-300 border border-white/10">
+                <i class="fa-regular fa-clock mr-1"></i>${formattedTime}
+              </span>
+
               <!-- STAMP IMAGE WITH SOUND & ZOOM DROP ANIMATION -->
               <img src="stamp.png" alt="Authorized Stamp" class="official-stamp ${isJustUploaded ? 'opacity-0' : ''}" ${isJustUploaded ? 'onload="this.classList.add(\'animate-stamp\'); this.classList.remove(\'opacity-0\'); playStampSound();"' : ''}>
             </div>
