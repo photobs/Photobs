@@ -394,6 +394,172 @@
     let activePreviewAudio = null;
     let activePlayButton = null;
 
+    // BACKGROUND VOICE LISTENER ("Hi Souptik" -> "How can I help you, [Name]?")
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+    let recognition = null;
+    let isListeningActive = false;
+    let awaitingCommand = false;
+    let isSpeakingReply = false;
+
+    function speakText(text, onDone) {
+      if (!('speechSynthesis' in window)) {
+        if (onDone) onDone();
+        return;
+      }
+      try {
+        window.speechSynthesis.cancel();
+        const utterance = new SpeechSynthesisUtterance(text);
+        utterance.rate = 1;
+        utterance.pitch = 1;
+        isSpeakingReply = true;
+        utterance.onend = () => {
+          isSpeakingReply = false;
+          if (onDone) onDone();
+        };
+        utterance.onerror = () => {
+          isSpeakingReply = false;
+          if (onDone) onDone();
+        };
+        window.speechSynthesis.speak(utterance);
+      } catch (e) {
+        isSpeakingReply = false;
+        if (onDone) onDone();
+      }
+    }
+
+    function applyVoiceCommand(transcript) {
+      const cmd = transcript.toLowerCase().trim();
+
+      if (cmd.includes("light mode") || cmd.includes("light theme")) {
+        document.body.classList.add('light-mode');
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = "fa-solid fa-moon text-indigo-600";
+        speakText("Switched to light mode");
+        return true;
+      }
+
+      if (cmd.includes("dark mode") || cmd.includes("dark theme")) {
+        document.body.classList.remove('light-mode');
+        const icon = document.getElementById('theme-icon');
+        if (icon) icon.className = "fa-solid fa-sun text-yellow-400";
+        speakText("Switched to dark mode");
+        return true;
+      }
+
+      if (cmd.includes("open upload") || cmd.includes("upload photo")) {
+        document.getElementById('upload-modal')?.classList.remove('hidden');
+        speakText("Opening upload window");
+        return true;
+      }
+
+      if (cmd.includes("close upload") || cmd.includes("close modal")) {
+        document.getElementById('upload-modal')?.classList.add('hidden');
+        document.getElementById('lightbox-modal')?.classList.add('hidden');
+        document.getElementById('tune-modal')?.classList.add('hidden');
+        speakText("Closed");
+        return true;
+      }
+
+      if (cmd.includes("scroll down")) {
+        window.scrollBy({ top: 600, behavior: 'smooth' });
+        speakText("Scrolling down");
+        return true;
+      }
+
+      if (cmd.includes("scroll up") || cmd.includes("go to top")) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+        speakText("Scrolling up");
+        return true;
+      }
+
+      const categories = ["all", "nature", "sports", "technology", "people", "travel", "others"];
+      for (const cat of categories) {
+        if (cmd.includes(cat)) {
+          const btn = document.querySelector(`.category-btn[data-cat="${cat}"]`);
+          if (btn) {
+            btn.click();
+            speakText(`Showing ${cat}`);
+            return true;
+          }
+        }
+      }
+
+      if (cmd.startsWith("search ")) {
+        const query = cmd.replace("search ", "").trim();
+        const searchInput = document.getElementById('search-input');
+        if (searchInput && query) {
+          searchInput.value = query;
+          searchInput.dispatchEvent(new Event('input'));
+          speakText(`Searching for ${query}`);
+          return true;
+        }
+      }
+
+      return false;
+    }
+
+    function initBackgroundVoiceSensor() {
+      if (!SpeechRecognition || isListeningActive) return;
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = true;
+      recognition.interimResults = false;
+      recognition.lang = 'en-IN';
+
+      recognition.onstart = () => {
+        isListeningActive = true;
+      };
+
+      recognition.onresult = (event) => {
+        if (isSpeakingReply) return;
+        const lastIdx = event.results.length - 1;
+        const transcript = event.results[lastIdx][0].transcript.toLowerCase().trim();
+
+        if (transcript.includes("hi souptik") || transcript.includes("hey souptik")) {
+          awaitingCommand = true;
+          const userName = currentUser && currentUser.displayName ? currentUser.displayName : "";
+          const reply = userName ? `How can I help you, ${userName}?` : "How can I help you?";
+          speakText(reply);
+          return;
+        }
+
+        if (awaitingCommand) {
+          const handled = applyVoiceCommand(transcript);
+          if (handled) {
+            awaitingCommand = false;
+          }
+        }
+      };
+
+      recognition.onerror = () => {
+        isListeningActive = false;
+      };
+
+      recognition.onend = () => {
+        isListeningActive = false;
+        setTimeout(() => {
+          if (!isListeningActive && recognition) {
+            try {
+              recognition.start();
+            } catch (e) {}
+          }
+        }, 500);
+      };
+
+      try {
+        recognition.start();
+      } catch (e) {}
+    }
+
+    function startSensorOnFirstGesture() {
+      initBackgroundVoiceSensor();
+      window.removeEventListener('pointerdown', startSensorOnFirstGesture);
+      window.removeEventListener('keydown', startSensorOnFirstGesture);
+    }
+
+    window.addEventListener('pointerdown', startSensorOnFirstGesture, { once: true });
+    window.addEventListener('keydown', startSensorOnFirstGesture, { once: true });
+
     // TIME AGO HELPER FUNCTION
     function timeAgo(timestamp) {
       if (!timestamp) return 'Just now';
