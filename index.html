@@ -371,7 +371,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+    import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc, updateDoc, increment, arrayUnion } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
     import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 
     // Firebase Configuration
@@ -393,6 +393,10 @@
     let currentUser = null;
     let activePreviewAudio = null;
     let activePlayButton = null;
+    let unsubscribePhotos = null;
+    let newlyUploadedId = null;
+    let currentCategory = 'all';
+    let searchQuery = '';
 
     // BACKGROUND VOICE LISTENER ("Hi Souptik" -> "How can I help you, [Name]?")
     const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -696,8 +700,6 @@
       }
     });
 
-    let newlyUploadedId = null;
-
     // DIGITAL STAMP SOUND EFFECT
     window.playStampSound = function() {
       try {
@@ -987,8 +989,6 @@
           successOverlay.classList.add('hidden');
           successBox.classList.remove('animate-popup-text');
         }, 4000);
-
-        loadPhotos();
       } catch (error) {
         console.error("Upload error: ", error);
         alert(error.message || 'Failed to upload photo.');
@@ -998,9 +998,170 @@
       }
     });
 
-    // CATEGORY & SEARCH FILTER STATE
-    let currentCategory = 'all';
-    let searchQuery = '';
+    function renderPhotoCards(filteredPhotos) {
+      const grid = document.getElementById('photo-grid');
+      grid.innerHTML = '';
+
+      filteredPhotos.forEach((photo) => {
+        const photoId = photo.id;
+        const isJustUploaded = (photoId === newlyUploadedId);
+        const formattedTime = timeAgo(photo.timestamp);
+
+        const card = document.createElement('div');
+        card.className = `bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col relative ${isJustUploaded ? 'animate-card-flash' : ''}`;
+        card.innerHTML = `
+          <div class="relative group h-48 overflow-hidden bg-slate-950 cursor-pointer">
+            <img src="${photo.imageUrl}" alt="${photo.picName}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 preview-trigger">
+            <span class="absolute top-2 right-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md rounded-full text-blue-300">${photo.picCategory}</span>
+            
+            <!-- Transparent Time Ago Badge (Top Left of Image) -->
+            <span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-medium bg-black/40 backdrop-blur-md rounded-full text-slate-300 border border-white/10">
+              <i class="fa-regular fa-clock mr-1"></i>${formattedTime}
+            </span>
+
+            <!-- STAMP IMAGE WITH SOUND & ZOOM DROP ANIMATION -->
+            <img src="stamp.png" alt="Authorized Stamp" class="official-stamp ${isJustUploaded ? 'opacity-0' : ''}" ${isJustUploaded ? 'onload="this.classList.add(\'animate-stamp\'); this.classList.remove(\'opacity-0\'); playStampSound();"' : ''}>
+          </div>
+          <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
+            <div>
+              <div class="flex items-start justify-between">
+                <h4 class="font-bold text-lg text-white truncate">${photo.picName}</h4>
+                <button class="text-xs text-red-400 hover:text-red-300 delete-btn" data-email="${photo.uploaderEmail}" title="Delete Photo">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+              </div>
+              <p class="text-xs text-slate-400">By ${photo.uploaderName}</p>
+              <p class="text-xs text-slate-300 mt-1 line-clamp-2">${photo.picDesc || 'No description'}</p>
+            </div>
+
+            <!-- Comments Section Box -->
+            <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
+              <div class="max-h-24 overflow-y-auto space-y-1 text-xs text-slate-300 comment-list">
+                ${(photo.comments || []).map(c => `<p class="bg-slate-800/80 p-1 rounded"><strong>${c.user}:</strong>${c.text}</p>`).join('') || '<p class="text-slate-500">No comments yet.</p>'}
+              </div>
+              <div class="flex gap-1">
+                <input type="text" placeholder="Write comment..." class="flex-1 px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-white comment-input">
+                <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded send-comment-btn">Post</button>
+              </div>
+            </div>
+
+            <div class="flex items-center justify-between pt-2 border-t border-slate-700/50 text-sm text-slate-300">
+              <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn">
+                <i class="fa-solid fa-heart text-red-500"></i> <span>${photo.likes || 0}</span>
+              </button>
+              <button class="flex items-center gap-1.5 hover:text-blue-400 transition toggle-comment-btn">
+                <i class="fa-regular fa-comment"></i> <span>${photo.comments ? photo.comments.length : 0}</span>
+              </button>
+              <a href="${photo.imageUrl}" download="${photo.picName || 'photo'}.jpg" class="flex items-center gap-1.5 hover:text-emerald-400 transition" title="Download Photo">
+                <i class="fa-solid fa-download"></i>
+              </a>
+              <button class="flex items-center gap-1.5 hover:text-indigo-400 transition share-btn" data-name="${photo.picName}">
+                <i class="fa-solid fa-share-nodes"></i>
+              </button>
+            </div>
+          </div>
+        `;
+
+        card.querySelector('.preview-trigger').addEventListener('click', () => {
+          lightboxImg.src = photo.imageUrl;
+          lightboxModal.classList.remove('hidden');
+        });
+
+        card.querySelector('.like-btn').addEventListener('click', async () => {
+          const docRef = doc(db, "photos", photoId);
+          await updateDoc(docRef, { likes: increment(1) });
+        });
+
+        card.querySelector('.toggle-comment-btn').addEventListener('click', () => {
+          card.querySelector('.comment-section').classList.toggle('hidden');
+        });
+
+        card.querySelector('.send-comment-btn').addEventListener('click', async () => {
+          const input = card.querySelector('.comment-input');
+          const text = input.value.trim();
+          if (!text) return;
+          const userName = currentUser ? currentUser.displayName : (prompt("Enter your name for comment:") || "Guest");
+          const docRef = doc(db, "photos", photoId);
+          await updateDoc(docRef, {
+            comments: arrayUnion({ user: userName, text: text })
+          });
+        });
+
+        card.querySelector('.delete-btn').addEventListener('click', async (e) => {
+          const uploaderEmail = e.currentTarget.getAttribute('data-email');
+          const enteredEmail = currentUser ? currentUser.email : prompt("Enter the uploader's Gmail to delete this photo:");
+          if (enteredEmail === uploaderEmail) {
+            if (confirm("Are you sure you want to delete this photo?")) {
+              await deleteDoc(doc(db, "photos", photoId));
+              alert('Photo deleted successfully!');
+            }
+          } else if (enteredEmail !== null) {
+            alert('Incorrect Gmail! You cannot delete this photo.');
+          }
+        });
+
+        card.querySelector('.share-btn').addEventListener('click', (e) => {
+          const title = e.currentTarget.getAttribute('data-name');
+          if (navigator.share) {
+            navigator.share({ title: title, url: window.location.href });
+          } else {
+            navigator.clipboard.writeText(window.location.href);
+            alert('Link copied to clipboard!');
+          }
+        });
+
+        grid.appendChild(card);
+      });
+    }
+
+    function listenPhotosRealtime() {
+      const grid = document.getElementById('photo-grid');
+      grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">Loading photos...</p>';
+
+      if (unsubscribePhotos) {
+        unsubscribePhotos();
+      }
+
+      unsubscribePhotos = onSnapshot(
+        collection(db, "photos"),
+        (querySnapshot) => {
+          let photosArray = [];
+          querySnapshot.forEach((docSnap) => {
+            const data = docSnap.data();
+            let imageUrl = "";
+            if (data.imagePart1 && data.imagePart2) {
+              imageUrl = data.imagePart1 + data.imagePart2;
+            } else if (data.imageUrl) {
+              imageUrl = data.imageUrl;
+            }
+            photosArray.push({ id: docSnap.id, ...data, imageUrl });
+          });
+
+          const filteredPhotos = photosArray.filter(photo => {
+            const matchesCategory = (currentCategory === 'all' || photo.picCategory === currentCategory);
+            const matchesSearch = (
+              (photo.picName && photo.picName.toLowerCase().includes(searchQuery)) ||
+              (photo.picCategory && photo.picCategory.toLowerCase().includes(searchQuery)) ||
+              (photo.uploaderName && photo.uploaderName.toLowerCase().includes(searchQuery)) ||
+              (photo.picDesc && photo.picDesc.toLowerCase().includes(searchQuery))
+            );
+            return matchesCategory && matchesSearch;
+          });
+
+          if (filteredPhotos.length === 0) {
+            grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">No photos found in this category or search!</p>';
+            return;
+          }
+
+          renderPhotoCards(filteredPhotos);
+          newlyUploadedId = null;
+        },
+        (error) => {
+          console.error("Firestore realtime error:", error);
+          grid.innerHTML = `<p class="col-span-full text-center text-red-400">Database error: ${error.message}</p>`;
+        }
+      );
+    }
 
     document.querySelectorAll('.category-btn').forEach(btn => {
       btn.addEventListener('click', (e) => {
@@ -1012,177 +1173,18 @@
         target.classList.remove('bg-slate-800/80', 'text-slate-300', 'border', 'border-slate-700');
         target.classList.add('bg-blue-600', 'text-white');
         currentCategory = target.getAttribute('data-cat');
-        loadPhotos();
+        listenPhotosRealtime();
       });
     });
 
     document.getElementById('search-input').addEventListener('input', (e) => {
       searchQuery = e.target.value.toLowerCase().trim();
-      loadPhotos();
+      listenPhotosRealtime();
     });
-
-    // LOAD & RENDER PHOTOS (WITH TIME AGO DISPLAY)
-    async function loadPhotos() {
-      const grid = document.getElementById('photo-grid');
-      grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">Loading photos...</p>';
-
-      try {
-        const querySnapshot = await getDocs(collection(db, "photos"));
-        grid.innerHTML = '';
-
-        let photosArray = [];
-        querySnapshot.forEach((docSnap) => {
-          const data = docSnap.data();
-          let imageUrl = "";
-          if (data.imagePart1 && data.imagePart2) {
-            imageUrl = data.imagePart1 + data.imagePart2;
-          } else if (data.imageUrl) {
-            imageUrl = data.imageUrl;
-          }
-          photosArray.push({ id: docSnap.id, ...data, imageUrl });
-        });
-
-        const filteredPhotos = photosArray.filter(photo => {
-          const matchesCategory = (currentCategory === 'all' || photo.picCategory === currentCategory);
-          const matchesSearch = (
-            (photo.picName && photo.picName.toLowerCase().includes(searchQuery)) ||
-            (photo.picCategory && photo.picCategory.toLowerCase().includes(searchQuery)) ||
-            (photo.uploaderName && photo.uploaderName.toLowerCase().includes(searchQuery)) ||
-            (photo.picDesc && photo.picDesc.toLowerCase().includes(searchQuery))
-          );
-          return matchesCategory && matchesSearch;
-        });
-
-        if (filteredPhotos.length === 0) {
-          grid.innerHTML = '<p class="col-span-full text-center text-slate-400 py-10">No photos found in this category or search!</p>';
-          return;
-        }
-
-        filteredPhotos.forEach((photo) => {
-          const photoId = photo.id;
-          const isJustUploaded = (photoId === newlyUploadedId);
-          const formattedTime = timeAgo(photo.timestamp);
-
-          const card = document.createElement('div');
-          card.className = `bg-card rounded-2xl overflow-hidden shadow-xl border border-slate-700/50 flex flex-col relative ${isJustUploaded ? 'animate-card-flash' : ''}`;
-          card.innerHTML = `
-            <div class="relative group h-48 overflow-hidden bg-slate-950 cursor-pointer">
-              <img src="${photo.imageUrl}" alt="${photo.picName}" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105 preview-trigger">
-              <span class="absolute top-2 right-2 px-2.5 py-1 text-[10px] uppercase font-bold tracking-wider bg-black/60 backdrop-blur-md rounded-full text-blue-300">${photo.picCategory}</span>
-              
-              <!-- Transparent Time Ago Badge (Top Left of Image) -->
-              <span class="absolute top-2 left-2 px-2 py-0.5 text-[10px] font-medium bg-black/40 backdrop-blur-md rounded-full text-slate-300 border border-white/10">
-                <i class="fa-regular fa-clock mr-1"></i>${formattedTime}
-              </span>
-
-              <!-- STAMP IMAGE WITH SOUND & ZOOM DROP ANIMATION -->
-              <img src="stamp.png" alt="Authorized Stamp" class="official-stamp ${isJustUploaded ? 'opacity-0' : ''}" ${isJustUploaded ? 'onload="this.classList.add(\'animate-stamp\'); this.classList.remove(\'opacity-0\'); playStampSound();"' : ''}>
-            </div>
-            <div class="p-4 flex-1 flex flex-col justify-between space-y-3">
-              <div>
-                <div class="flex items-start justify-between">
-                  <h4 class="font-bold text-lg text-white truncate">${photo.picName}</h4>
-                  <button class="text-xs text-red-400 hover:text-red-300 delete-btn" data-email="${photo.uploaderEmail}" title="Delete Photo">
-                    <i class="fa-solid fa-trash"></i>
-                  </button>
-                </div>
-                <p class="text-xs text-slate-400">By ${photo.uploaderName}</p>
-                <p class="text-xs text-slate-300 mt-1 line-clamp-2">${photo.picDesc || 'No description'}</p>
-              </div>
-
-              <!-- Comments Section Box -->
-              <div class="comment-section hidden space-y-2 pt-2 border-t border-slate-700/50">
-                <div class="max-h-24 overflow-y-auto space-y-1 text-xs text-slate-300 comment-list">
-                  ${(photo.comments || []).map(c => `<p class="bg-slate-800/80 p-1 rounded"><strong>${c.user}:</strong>${c.text}</p>`).join('') || '<p class="text-slate-500">No comments yet.</p>'}
-                </div>
-                <div class="flex gap-1">
-                  <input type="text" placeholder="Write comment..." class="flex-1 px-2 py-1 text-xs rounded bg-slate-800 border border-slate-700 text-white comment-input">
-                  <button class="px-3 py-1 text-xs bg-blue-600 text-white rounded send-comment-btn">Post</button>
-                </div>
-              </div>
-
-              <div class="flex items-center justify-between pt-2 border-t border-slate-700/50 text-sm text-slate-300">
-                <button class="flex items-center gap-1.5 hover:text-red-500 transition like-btn">
-                  <i class="fa-solid fa-heart text-red-500"></i> <span>${photo.likes || 0}</span>
-                </button>
-                <button class="flex items-center gap-1.5 hover:text-blue-400 transition toggle-comment-btn">
-                  <i class="fa-regular fa-comment"></i> <span>${photo.comments ? photo.comments.length : 0}</span>
-                </button>
-                <a href="${photo.imageUrl}" download="${photo.picName || 'photo'}.jpg" class="flex items-center gap-1.5 hover:text-emerald-400 transition" title="Download Photo">
-                  <i class="fa-solid fa-download"></i>
-                </a>
-                <button class="flex items-center gap-1.5 hover:text-indigo-400 transition share-btn" data-name="${photo.picName}">
-                  <i class="fa-solid fa-share-nodes"></i>
-                </button>
-              </div>
-            </div>
-          `;
-
-          card.querySelector('.preview-trigger').addEventListener('click', () => {
-            lightboxImg.src = photo.imageUrl;
-            lightboxModal.classList.remove('hidden');
-          });
-
-          card.querySelector('.like-btn').addEventListener('click', async () => {
-            const docRef = doc(db, "photos", photoId);
-            await updateDoc(docRef, { likes: increment(1) });
-            loadPhotos();
-          });
-
-          card.querySelector('.toggle-comment-btn').addEventListener('click', () => {
-            card.querySelector('.comment-section').classList.toggle('hidden');
-          });
-
-          card.querySelector('.send-comment-btn').addEventListener('click', async () => {
-            const input = card.querySelector('.comment-input');
-            const text = input.value.trim();
-            if (!text) return;
-            const userName = currentUser ? currentUser.displayName : (prompt("Enter your name for comment:") || "Guest");
-            const docRef = doc(db, "photos", photoId);
-            await updateDoc(docRef, {
-              comments: arrayUnion({ user: userName, text: text })
-            });
-            loadPhotos();
-          });
-
-          card.querySelector('.delete-btn').addEventListener('click', async (e) => {
-            const uploaderEmail = e.currentTarget.getAttribute('data-email');
-            const enteredEmail = currentUser ? currentUser.email : prompt("Enter the uploader's Gmail to delete this photo:");
-            if (enteredEmail === uploaderEmail) {
-              if (confirm("Are you sure you want to delete this photo?")) {
-                await deleteDoc(doc(db, "photos", photoId));
-                alert('Photo deleted successfully!');
-                loadPhotos();
-              }
-            } else if (enteredEmail !== null) {
-              alert('Incorrect Gmail! You cannot delete this photo.');
-            }
-          });
-
-          card.querySelector('.share-btn').addEventListener('click', (e) => {
-            const title = e.currentTarget.getAttribute('data-name');
-            if (navigator.share) {
-              navigator.share({ title: title, url: window.location.href });
-            } else {
-              navigator.clipboard.writeText(window.location.href);
-              alert('Link copied to clipboard!');
-            }
-          });
-
-          grid.appendChild(card);
-        });
-
-        newlyUploadedId = null;
-
-      } catch (error) {
-        console.error("Error loading photos: ", error);
-        grid.innerHTML = '<p class="col-span-full text-center text-red-400">Error loading photos from database.</p>';
-      }
-    }
 
     window.addEventListener('DOMContentLoaded', () => {
       startTypewriter();
-      loadPhotos();
+      listenPhotosRealtime();
     });
   </script>
 </body>
